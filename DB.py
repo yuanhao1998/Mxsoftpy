@@ -7,5 +7,5 @@ from mxsoftpy import TreeDB
 
 class DB:
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.tree = TreeDB()

@@ -7,7 +7,7 @@ from mxsoftpy.conf_base import ConfBase
 
 class Server(ConfBase):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__()
         self.db = getattr(self, '__db__')() if hasattr(self, '__db__') else None
         self.model = getattr(self, '__model__') if hasattr(self, '__model__') else None

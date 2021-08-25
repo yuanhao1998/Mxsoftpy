@@ -46,7 +46,7 @@ type_map = {
 
 class TreeDB(object):
 
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         self.__chl = CBSHandleLoc()
 
     @staticmethod

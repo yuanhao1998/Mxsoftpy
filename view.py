@@ -16,7 +16,7 @@ class Request(ConfBase):
     session处理基类
     """
 
-    def __init__(self, session):
+    def __init__(self, session, *args, **kwargs):
         super().__init__()
         self.session = session  # session会话
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
@@ -270,7 +270,7 @@ class Response:
     响应类
     """
 
-    def __init__(self, msg: t.Any):
+    def __init__(self, msg: t.Any, *args, **kwargs):
         self.msg = msg
 
     def __str__(self):
@@ -278,7 +278,7 @@ class Response:
 
 
 class View(ConfBase):
-    def __init__(self, request: "Request"):
+    def __init__(self, request: "Request", *args, **kwargs):
         super().__init__()
         self.request = request
 
