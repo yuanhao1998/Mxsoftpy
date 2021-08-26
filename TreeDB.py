@@ -7,7 +7,7 @@ from typing import List, Any, Union
 
 from superbsapi import *
 
-from mxsoftpy.exception import DBError
+from mxsoftpy.exception import DBError, DataError
 from utils.conf.db_error import BS_NOERROR
 from utils.conf.constants import *
 from utils.conf.def_tree import *
@@ -426,13 +426,12 @@ class TreeDB(object):
         expression_list = list()
 
         for key, value in kwargs.items():
-            if re.match(r'^[_]?[[0-9A-Za-z]+[_]?[0-9A-Za-z]+]*?$', key):
+            try:
+                key, symbol = key.rsplit('__', 1)
+                if symbol not in symbol_map:
+                    raise DataError('查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册')
+            except ValueError:
                 symbol = 'e'
-            elif re.match(r'^[_]?[[0-9A-Za-z]+[_]?[0-9A-Za-z]+]*?__[0-9A-Za-z]+$', key):
-                key, symbol = key.split('__')
-                assert symbol in symbol_map, '查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册'
-            else:
-                raise ValueError('查询格式错误！正确示例：name="test", vLiData__gt=3，详情见TreeModel使用手册')
 
             temp = {'key': key, 'value_type': type(value).__name__, 'symbol': symbol, 'value': value}
 
