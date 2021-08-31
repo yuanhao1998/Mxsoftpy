@@ -20,7 +20,7 @@ class Request(ConfBase):
         super().__init__()
         self.session = session  # session会话
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
-        self.response_content_type = 'text/html;charset=UTF-8'  # 默认的response类型
+        self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
 
         self._request_headers_cls = None
         self._response_headers_cls = None

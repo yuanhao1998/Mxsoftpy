@@ -6,6 +6,11 @@ import json
 
 from mxsoftpy.def_http_code import HttpCode
 
+try:
+    from utils.conf.db_error import error_dict
+except ModuleNotFoundError:
+    error_dict = dict()
+
 
 class MxBaseException(Exception):
     """
@@ -79,9 +84,9 @@ class DBError(MxBaseException):
 
     def __str__(self):
         if not self.msg:
-            msg = '数据库错误，错误码: ' + str(self.err_code)
+            msg = '数据库错误，错误码: %s' % self.err_code
         else:
-            msg = '%s: 数据库错误, 错误码: %s' % (self.msg, self.err_code)
+            msg = '%s: 数据库错误, 错误码: %s, 错误原因: %s' % (self.msg, self.err_code, error_dict.get(self.err_code))
 
         return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
 
