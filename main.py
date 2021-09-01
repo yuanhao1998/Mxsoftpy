@@ -9,7 +9,7 @@ from itertools import chain
 
 from pydantic import ValidationError
 
-from mxsoftpy.HTTPMethod import send_response, send_error_response
+from .HTTPMethod import send_response, send_error_response
 from .base import BaseMx
 from .exception import NotFoundError, CError, MxBaseException
 from .view import Request, Response

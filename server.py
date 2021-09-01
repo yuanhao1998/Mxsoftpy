@@ -2,7 +2,7 @@
 # @Create   : 2021/6/25 16:59
 # @Author   : yh
 # @Remark   : mx框架Server层
-from mxsoftpy.conf_base import ConfBase
+from .conf_base import ConfBase
 
 
 class Server(ConfBase):

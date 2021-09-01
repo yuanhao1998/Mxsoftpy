@@ -2,8 +2,7 @@
 # @Create   : 2021/5/26 9:47
 # @Author   : yh
 # @Remark   : http会话相关的公共方法
-from mxsoftpy.def_http_code import HttpCode
-from mxsoftpy.def_http_code import WeMr
+from .def_http_code import HttpCode, WeMr
 
 
 def redirect(session, url: str, params: dict):

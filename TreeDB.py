@@ -7,7 +7,7 @@ from typing import List, Any, Union
 
 from superbsapi import *
 
-from mxsoftpy.exception import DBError, DataError
+from .exception import DBError, DataError
 from utils.conf.db_error import BS_NOERROR
 from utils.conf.constants import *
 from utils.conf.def_tree import *
@@ -165,8 +165,7 @@ class TreeDB(object):
                 self.exec_tree('Treedb_ReopenMainKey', sub_key, flag, path_flag, main_key, main_key_pwd, file)
             except DBError:
                 try:
-                    logging.warning('您正使用Treedb_Alloc()重新连接数据库，如频繁看见此条警告，请确认是否正常')
-                    logging.warning('正在打开主键[%s]-子键[%s]' % (main_key, sub_key))
+                    logging.warning('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
                     self.__chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
@@ -180,8 +179,7 @@ class TreeDB(object):
                     self.exec_tree('Treedb_ReopenMainKey', '', flag, path_flag, main_key, main_key_pwd, file)
                 except DBError:
                     try:
-                        logging.warning('您正使用Treedb_Alloc()重新连接数据库，如频繁看见此条警告，请确认是否正常')
-                        logging.warning('正在打开主键[%s]' % main_key)
+                        logging.warning('正在重新连接数据库并打开主键[%s]' % main_key)
                         self.__chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     except DBError as e:

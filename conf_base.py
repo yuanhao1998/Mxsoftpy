@@ -2,7 +2,7 @@
 # @Create   : 2021/8/3 15:14
 # @Author   : yh
 # @Remark   : 读取配置文件的基类
-from mxsoftpy.exception import FileError
+from .exception import FileError
 
 
 class ConfBase:
