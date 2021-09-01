@@ -87,6 +87,17 @@ class TreeDB(object):
         res = eval(operate)(self.__chl.GetConfHandle(), *args, **kwargs)
         return self.return_value(res)
 
+    def exec_class(self, operator: str, *args, **kwargs):
+        """
+        用于执行类方法
+
+        :param operator: 使用的函数
+        :return: 执行结果
+        """
+        func = getattr(CBSHandleLoc, operator)
+        res = func(*args, **kwargs)
+        return self.return_value(res)
+
     def begin(self) -> int:
         """
         开启事务
@@ -255,6 +266,19 @@ class TreeDB(object):
         :return: 属性值
         """
         return self.exec_tree('Treedb_GetProperty', prop_name)
+
+    def insert_main_key(self, main_key: str, host: str, file: str,  main_pwd: str = '', port: int = 0):
+        """
+        插入主键
+        eg: db.insert_main_key('test', host='127.0.0.1', file='IOT')
+
+        :param main_key: 主键名
+        :param file: 文件名
+        :param host: 主机ip
+        :param main_pwd: 主键密码
+        :param port:
+        """
+        return self.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
     def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> None:
         """
