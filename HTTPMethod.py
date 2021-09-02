@@ -49,13 +49,3 @@ def send_response(session, data):
         session.SendHeader()
         session.SendData(data)
     return WeMr.WE_MR_OK
-
-
-def send_error_response(session, error_type, error_value):
-    """
-    全局异常捕获及处理
-    """
-    error = error_type(error_value)
-
-    session.GetHttpResponseHead().SetStatus(error.state_code)
-    send_response(session, str(error_value))

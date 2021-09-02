@@ -9,7 +9,7 @@ from itertools import chain
 
 from pydantic import ValidationError
 
-from .HTTPMethod import send_response, send_error_response
+from .HTTPMethod import send_response
 from .base import BaseMx
 from .exception import NotFoundError, CError, MxBaseException
 from .view import Request, Response
@@ -60,7 +60,8 @@ class Mx(BaseMx):
         :return: 打包后的数据
         """
         if isinstance(data, tuple):
-            data = json.dumps({'status': 'success', 'errmsg': data[0], 'data': data[1] if len(data) == 2 else data[1:]}, ensure_ascii=False)
+            data = json.dumps({'status': 'success', 'errmsg': data[0], 'data': data[1] if len(data) == 2 else data[1:]},
+                              ensure_ascii=False)
         else:
             data = json.dumps({'status': 'failed', 'errmsg': data}, ensure_ascii=False)
 
@@ -102,6 +103,36 @@ class Mx(BaseMx):
         url = '/' + url if not url.startswith('/') else url
         return self.url_map.get(url)
 
+    def mx_base_exception_handler(self) -> None:
+        """
+        对捕获到的MxBaseException进行处理
+        """
+        error_type, error_value, error_traceback = sys.exc_info()
+        self.session_handler = self.set_response(self.session_handler)
+
+        error = error_type(error_value)
+        self.session_handler.session.GetHttpResponseHead().SetStatus(error.state_code)
+
+        send_response(self.session_handler.session, '%s(%s)' % (
+            self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
+            error_value))
+
+    def validation_error_handler(self):
+        """
+        对捕获到的ValidationError进行处理
+        """
+        error_type, error_value, error_traceback = sys.exc_info()
+        self.session_handler = self.set_response(self.session_handler)
+
+        error = json.dumps({'status': 'failed',
+                            'errmsg': error_value.model.__name__ + ': 模型字段校验失败, ' +
+                                      str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
+                                           for error in error_value.errors()])},
+                           ensure_ascii=False)
+
+        send_response(self.session_handler.session,
+                      '%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error)
+
     def run_func(self, session) -> None:
         """
         运行url对应的函数、异常处理
@@ -119,18 +150,10 @@ class Mx(BaseMx):
                 resp_cls, res = func(self.session_handler)
                 send_response(*self.response_handle(resp_cls, res))
             except MxBaseException:
-                error_type, error_value, error_traceback = sys.exc_info()
-                self.session_handler = self.set_response(self.session_handler)
-                send_error_response(self.session_handler.session, error_type, error_value)
+                self.mx_base_exception_handler()
             except ValidationError:
-                error_type, error_value, error_traceback = sys.exc_info()
-                self.session_handler = self.set_response(self.session_handler)
-                send_response(self.session_handler.session,
-                              json.dumps({'status': 'failed',
-                                          'errmsg': error_value.model.__name__ + ': 模型字段校验失败, ' +
-                                                    str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
-                                                         for error in error_value.errors()])},
-                                         ensure_ascii=False))
+                self.validation_error_handler()
+
         else:
             raise NotFoundError(self.url_map)
 
