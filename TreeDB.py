@@ -8,10 +8,9 @@ from typing import List, Any, Union
 from superbsapi import *
 
 from .exception import DBError, DataError
-from utils.conf.db_error import BS_NOERROR
-from utils.conf.constants import *
-from utils.conf.def_tree import *
-from utils.conf.mxconfig import MxConfig
+from .db_def.db_error import BS_NOERROR
+from .db_def.def_type import *
+from .db_def.def_tree import *
 
 symbol_map = {
     'e': TRDB_FMC_EQUAL,  # 等于
@@ -46,8 +45,10 @@ type_map = {
 
 class TreeDB(object):
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, host='127.0.0.1', port=8123) -> None:
         self.__chl = CBSHandleLoc()
+        self.host = host
+        self.port = port
 
     @staticmethod
     def return_value(res: tuple) -> Union[int, tuple, None]:
@@ -137,8 +138,8 @@ class TreeDB(object):
         # TODO 用到了再写吧
         # return self.exec_bs('bs_treedb_delete_index')
 
-    def open(self, main_key: str, sub_key: str = None, host: str = MxConfig.HOST, file: str = 'base',
-             main_key_pwd: str = '', flag: int = None, port: int = MxConfig.PORT, path_flag: bool = False) -> "TreeDB":
+    def open(self, main_key: str, sub_key: str = None, host: str = None, file: str = 'base',
+             main_key_pwd: str = '', flag: int = None, port: int = None, path_flag: bool = False) -> "TreeDB":
         """
         打开数据库键 [只打开主键或子键 / 同时打开主键和子键（子键路径）]
         eg: db = TreeModel()
@@ -154,6 +155,9 @@ class TreeDB(object):
         :param path_flag: 如果路径上有子键不存在是否自动创建
         :return: 类对象
         """
+        host = host or self.host
+        port = port or self.port
+
         if not flag:
             if sub_key:
                 flag = TRDB_OPKF_OPENEXIST if '\\' in sub_key else TRDB_OPKF_DOTPATH
@@ -186,7 +190,7 @@ class TreeDB(object):
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         return self
 
-    def main_keys(self, host: str = MxConfig.HOST, file: str = 'base', port: int = MxConfig.PORT) -> list:
+    def main_keys(self, host: str = None, file: str = 'base', port: int = None) -> list:
         """
         获取所有主键
         eg: sub_keys = db.open('MXSE', '1.SD', file='ccubase').main_keys()
@@ -196,6 +200,9 @@ class TreeDB(object):
         :param port: 端口号
         :return: 主键列表
         """
+        host = host or self.host
+        port = port or self.port
+
         res_list = list()
         self.exec_tree('Treedb_GetAllMainKeyNames', res_list, host, file, port)
         return res_list
@@ -302,7 +309,8 @@ class TreeDB(object):
         :param overwrite: 是否覆盖原值
         """
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
-        assert value_type, '未知的value_type, 类型：%s ,值：%s' % (str(type(value)), value)
+        if not value_type:
+            raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(value)), value))
         return self.exec_bs('bs_treedb_insert_property', prop, value, value_type, overwrite)
 
     @staticmethod
@@ -310,9 +318,12 @@ class TreeDB(object):
         """
         校验item是否符合数据要求并返回value type
         """
-        assert isinstance(item, tuple) and len(item) in [2, 3], '错误的数据类型，items列表中的数据应为元组且长度为2或3'
-        assert type_map.get(item[2]) if len(item) == 3 else type_map.get(
-            type(item[1]).__name__), '无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于文件首部type_map中添加此类型'
+        if not isinstance(item, tuple) or len(item) not in [2, 3]:
+            raise DataError('错误的数据类型，items列表中的数据应为元组且长度为2或3')
+        value_type = type_map.get(item[2]) if len(item) == 3 else type_map.get(
+            type(item[1]).__name__)
+        if not value_type:
+            raise DataError('无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于文件首部type_map中添加此类型')
         value_type = type_map[item[2]] if len(item) == 3 else type_map[type(item[1]).__name__]
         return value_type
 
@@ -324,7 +335,8 @@ class TreeDB(object):
         :param items: 插入的数据
         :param overwrite: 是否覆盖原值
         """
-        assert isinstance(items, list), '错误的数据类型，items应为列表'
+        if not isinstance(items, list):
+            raise DataError('错误的数据类型，items应为列表')
         data_list = list()
         for item in items:
             data_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
@@ -343,7 +355,8 @@ class TreeDB(object):
         """
         if isinstance(items, tuple):
             items = [items]
-        assert isinstance(items, list), '错误的数据类型，items应为列表'
+        if not isinstance(items, list):
+            raise DataError('错误的数据类型，items应为列表')
         items_list = list()
         for item in items:
             items_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
@@ -417,7 +430,7 @@ class TreeDB(object):
                         default_expression：手动传入条件关系，默认关系为 and
         :return: 总条数，查询结果
         """
-        import re
+
         try:
             page_size = kwargs.pop('page_size')
             assert page_size, '未获取到数据！'
@@ -459,8 +472,10 @@ class TreeDB(object):
 
             if symbol == 'in':
                 j = 0
-                assert isinstance(value, list), '查询格式错误！正确示例：a__in=[1, 3, 4, 5]，详情见TreeModel使用手册'
-                assert len(value) != 0, '使用in时列表不能为空'
+                if not isinstance(value, list):
+                    raise DataError('查询格式错误！正确示例：a__in=[1, 3, 4, 5]，详情见TreeModel使用手册')
+                if len(value) == 0:
+                    raise DataError('使用in时列表不能为空')
                 for v in value:
                     temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'e', 'value': v}
                     args.append(temp)
@@ -473,7 +488,8 @@ class TreeDB(object):
                 expression_temp += ')'
                 expression_list.append(expression_temp)
             elif symbol == 'between':
-                assert isinstance(value, list) and len(value) in [2, 3], '查询格式错误！正确示例：a__between=[1, 3]，详情见TreeModel使用手册'
+                if not isinstance(value, list) or len(value) not in [2, 3]:
+                    raise DataError('查询格式错误！正确示例：a__between=[1, 3]，详情见TreeModel使用手册')
                 temp['range_conditions'] = {'vLiData': value[0], 'vEnd': value[1]}
                 temp['value_type'] = value[2] if len(value) == 3 else type(value[0]).__name__
                 expression_list.append(' %s ' % i)
@@ -486,8 +502,10 @@ class TreeDB(object):
 
         default_query_conditions = list()
         for arg in args:
-            assert arg['symbol'] in symbol_map, '查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册'
-            assert arg['value_type'] in type_map, '查询数据类型！正确操作包含：str、int等，详情见TreeModel使用手册'
+            if arg['symbol'] not in symbol_map:
+                raise DataError('查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册')
+            if arg['value_type'] not in type_map:
+                raise DataError('查询数据类型！正确操作包含：str、int等，详情见TreeModel使用手册')
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
             if arg.get('range_conditions'):
