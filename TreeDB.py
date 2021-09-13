@@ -7,8 +7,8 @@ from typing import List, Any, Union
 
 from superbsapi import *
 
+from BaseDB import BaseDB
 from .exception import DBError, DataError
-from .db_def.db_error import BS_NOERROR
 from .db_def.def_type import *
 from .db_def.def_tree import *
 
@@ -26,78 +26,9 @@ symbol_map = {
     'between': TRDB_FMC_RANGE  # 范围查找（范围）
     # 其他的类型，以后用到了再添加
 }
-type_map = {
-    'str': VDT_STR,
-    'float': VDT_FLOAT,
-    'double': VDT_DOUBLE,
-    'int': VDT_I32,
-    'int8': VDT_I8,
-    'int64': VDT_I64,
-
-    'ui8': VDT_UI8,
-    'ui64': VDT_UI64,
-    'time': VDT_TIME,
-    'timestr': VDT_TIMESTR,
-    'empty': VDT_EMPTY
-    # 其他的类型，以后用到了再添加
-}
 
 
-class TreeDB(object):
-
-    def __init__(self, host='127.0.0.1', port=8123) -> None:
-        self.__chl = CBSHandleLoc()
-        self.host = host
-        self.port = port
-
-    @staticmethod
-    def return_value(res: tuple) -> Union[int, tuple, None]:
-        """
-        用于直接返回结果集的函数，处理其返回值
-
-        :param res: 错误信息及函数返回的数据
-        :return: 返回信息
-        """
-        msg = res[0] if isinstance(res, tuple) else res
-        if msg != BS_NOERROR:
-            raise DBError(msg)
-        if res:
-            return res[1] if len(res) == 2 else res[1:]
-        return None
-
-    def exec_tree(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, tuple, None]:
-        """
-        用于执行Tree db开头的函数
-
-        :param operate: 使用的函数
-        :param args kwargs: 函数所使用的变量
-        :return: 执行结果
-        """
-        func = getattr(self.__chl, operate)
-        res = func(*args, **kwargs)
-        return self.return_value(res)
-
-    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
-        """
-        用于执行bs开头的函数
-
-        :param operate: 使用的函数
-        :param args kwargs: 函数所使用的变量
-        :return: 执行结果
-        """
-        res = eval(operate)(self.__chl.GetConfHandle(), *args, **kwargs)
-        return self.return_value(res)
-
-    def exec_class(self, operator: str, *args, **kwargs):
-        """
-        用于执行类方法
-
-        :param operator: 使用的函数
-        :return: 执行结果
-        """
-        func = getattr(CBSHandleLoc, operator)
-        res = func(*args, **kwargs)
-        return self.return_value(res)
+class TreeDB(BaseDB):
 
     def begin(self) -> int:
         """
@@ -313,20 +244,6 @@ class TreeDB(object):
             raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(value)), value))
         return self.exec_bs('bs_treedb_insert_property', prop, value, value_type, overwrite)
 
-    @staticmethod
-    def _check_item(item: tuple) -> int:
-        """
-        校验item是否符合数据要求并返回value type
-        """
-        if not isinstance(item, tuple) or len(item) not in [2, 3]:
-            raise DataError('错误的数据类型，items列表中的数据应为元组且长度为2或3')
-        value_type = type_map.get(item[2]) if len(item) == 3 else type_map.get(
-            type(item[1]).__name__)
-        if not value_type:
-            raise DataError('无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于文件首部type_map中添加此类型')
-        value_type = type_map[item[2]] if len(item) == 3 else type_map[type(item[1]).__name__]
-        return value_type
-
     def insert_items(self, items: List[tuple], overwrite=True) -> int:
         """
         批量插入数据
@@ -464,7 +381,7 @@ class TreeDB(object):
             try:
                 key, symbol = key.rsplit('__', 1)
                 if symbol not in symbol_map:
-                    raise DataError('查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册')
+                    raise DataError('查询操作错误！正确操作包含：gt、lt等')
             except ValueError:
                 symbol = 'e'
 
@@ -473,7 +390,7 @@ class TreeDB(object):
             if symbol == 'in':
                 j = 0
                 if not isinstance(value, list):
-                    raise DataError('查询格式错误！正确示例：a__in=[1, 3, 4, 5]，详情见TreeModel使用手册')
+                    raise DataError('查询格式错误！正确示例：a__in=[1, 3, 4, 5]')
                 if len(value) == 0:
                     raise DataError('使用in时列表不能为空')
                 for v in value:

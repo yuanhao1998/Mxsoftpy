@@ -4,7 +4,7 @@
 # @Remark   : 在此编写所有自定义异常类
 import json
 
-from .def_http_code import HttpCode
+from def_http_code import HttpCode
 
 try:
     from utils.conf.db_error import error_dict

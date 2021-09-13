@@ -9,4 +9,7 @@ class Model(BaseModel):
     """
     暂时没有要添加或重写的方法，但是先预留出来
     """
-    pass
+
+    @classmethod
+    def get_fields(cls):
+        pass
