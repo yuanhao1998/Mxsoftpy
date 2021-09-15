@@ -4,11 +4,11 @@
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
 from typing import Union, Any
 
-from db_def.def_type import type_map
-from exception import DBError, DataError
+from .db_def.def_type import type_map
+from .exception import DBError, DataError
 from superbsapi import *
 
-from db_def.db_error import BS_NOERROR
+from .db_def.db_error import BS_NOERROR
 
 
 class BaseDB:

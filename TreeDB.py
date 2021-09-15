@@ -7,7 +7,7 @@ from typing import List, Any, Union
 
 from superbsapi import *
 
-from BaseDB import BaseDB
+from .BaseDB import BaseDB
 from .exception import DBError, DataError
 from .db_def.def_type import *
 from .db_def.def_tree import *
