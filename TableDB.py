@@ -2,7 +2,7 @@
 # @Create   : 2021/9/13 9:12
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法
-from typing import Type, List, TYPE_CHECKING
+from typing import Type, List
 
 from superbsapi import *
 
@@ -10,9 +10,7 @@ from .BaseDB import BaseDB
 from .db_def.def_table import *
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
-
-if TYPE_CHECKING:
-    from . import Model
+from . import Model
 
 
 class TableDB(BaseDB):
@@ -78,7 +76,7 @@ class TableDB(BaseDB):
 
         self.exec_bs('bs_tabledb_create_table', table, field_list, flag)
 
-    def insert(self, table: str,  data: List[tuple]) -> None:
+    def insert(self, table: str, data: List[tuple]) -> None:
         """
         向表中插入数据
         :param table: 表名

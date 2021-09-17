@@ -14,8 +14,13 @@ from .db_def.db_error import BS_NOERROR
 class BaseDB:
     def __init__(self, host='127.0.0.1', port=8123) -> None:
         self.__chl = CBSHandleLoc()
-        self.host = host
-        self.port = port
+        try:
+            from utils.conf.mxconfig import MxConfig
+            self.host = host or MxConfig.HOST
+            self.port = port or MxConfig.PORT
+        except (ModuleNotFoundError, ImportError, AttributeError):
+            self.host = host or '127.0.0.1'
+            self.port = port or 8123
 
     @staticmethod
     def return_value(res: tuple) -> Union[int, tuple, None]:
