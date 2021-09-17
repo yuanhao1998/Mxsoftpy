@@ -2,7 +2,7 @@
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
-from typing import Union, Any
+from typing import Union, Any, List
 
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
@@ -84,3 +84,23 @@ class BaseDB:
             raise DataError('无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于type_map中添加此类型')
         value_type = type_map[item[2]] if len(item) == 3 else type_map[type(item[1]).__name__]
         return value_type
+
+    def _generation_items(self, items: Union[List[tuple], dict]) -> list:
+        """
+        生成符合数据库插入格式的数据
+        :return:
+        """
+        data_list = list()
+        if isinstance(items, list):
+            for item in items:
+                data_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
+        elif isinstance(items, dict):
+            for k, v in items.items():
+                if type_map.get(type(v).__name__):
+                    data_list.append({'name': k, 'value': v, 'valuetype': type_map[type(v).__name__]})
+                else:
+                    raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(v)), v))
+        else:
+            raise DataError('错误的数据类型，items应为列表或字典')
+
+        return data_list

@@ -254,40 +254,23 @@ class TreeDB(BaseDB):
         :param overwrite: 是否覆盖原值
         """
 
-        data_list = list()
-        if isinstance(items, list):
-            for item in items:
-                data_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
-        elif isinstance(items, dict):
-            for k, v in items.items():
-                if type_map.get(type(v).__name__):
-                    data_list.append({'name': k, 'value': v, 'valuetype': type_map[type(v).__name__]})
-                else:
-                    raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(v)), v))
-        else:
-            raise DataError('错误的数据类型，items应为列表或字典')
+        return self.exec_bs('bs_treedb_insert_propertys', self._generation_items(items), overwrite)
 
-        return self.exec_bs('bs_treedb_insert_propertys', data_list, overwrite)
-
-    def insert_key_items(self, items: List[tuple], key: str = None) -> str:
+    def insert_key_items(self, items: Union[List[tuple], dict], key: str = None) -> str:
         """
         批量插入子键及k,v
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_key_items(
                                                     items=[('mxlabel', 'test'), ('mxid', 123)], key='key1')
+            db.open('MXSE', '1.SD', file='ccubase').insert_key_items(
+                                                    items={'mxlabel': 'test', 'mxid': 123}, key='key1')
 
         :param items: 插入的数据, 如果元组传入三个元素，将第三个元素当作数据类型（见文首type_map），如果只传入两个，则自动获取数据类型
         :param key: 子键名称,不传自动生成
         :return: 生成的子键
         """
-        if isinstance(items, tuple):
-            items = [items]
-        if not isinstance(items, list):
-            raise DataError('错误的数据类型，items应为列表')
-        items_list = list()
-        for item in items:
-            items_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
-        return self.exec_bs('bs_treedb_insert_key_and_properties', key or '', TRDB_OPKF_OPENEXIST, items_list,
-                            True)
+
+        return self.exec_bs('bs_treedb_insert_key_and_properties', key or '', TRDB_OPKF_OPENEXIST,
+                            self._generation_items(items), True)
 
     def delete(self, keys: Union[list, str, None] = None) -> None:
         """
