@@ -244,19 +244,28 @@ class TreeDB(BaseDB):
             raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(value)), value))
         return self.exec_bs('bs_treedb_insert_property', prop, value, value_type, overwrite)
 
-    def insert_items(self, items: List[tuple], overwrite=True) -> int:
+    def insert_items(self, items: Union[List[tuple], dict], overwrite=True) -> int:
         """
         批量插入数据
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_items([('mxlabel', 'test'), ('mxid', 123)])
+            db.open('MXSE', '1.SD', file='ccubase').insert_items({'mxlabel': 'test', 'mxid': 123})
 
         :param items: 插入的数据
         :param overwrite: 是否覆盖原值
         """
-        if not isinstance(items, list):
-            raise DataError('错误的数据类型，items应为列表')
+
         data_list = list()
-        for item in items:
-            data_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
+        if isinstance(items, list):
+            for item in items:
+                data_list.append({'name': item[0], 'value': item[1], 'valuetype': self._check_item(item)})
+        elif isinstance(items, dict):
+            for k, v in items.items():
+                if type_map.get(type(v).__name__):
+                    data_list.append({'name': k, 'value': v, 'valuetype': type_map[type(v).__name__]})
+                else:
+                    raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(v)), v))
+        else:
+            raise DataError('错误的数据类型，items应为列表或字典')
 
         return self.exec_bs('bs_treedb_insert_propertys', data_list, overwrite)
 
