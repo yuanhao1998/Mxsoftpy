@@ -12,7 +12,7 @@ from .db_def.db_error import BS_NOERROR
 
 
 class BaseDB:
-    def __init__(self, host='127.0.0.1', port=8123) -> None:
+    def __init__(self, host=None, port=None) -> None:
         self.__chl = CBSHandleLoc()
         try:
             from utils.conf.mxconfig import MxConfig
