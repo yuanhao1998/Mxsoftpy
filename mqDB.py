@@ -1,0 +1,80 @@
+# -*- coding: utf_8 -*-
+# @Create   : 2021/9/18 14:22
+# @Author   : yh
+# @Remark   : 存放消息队列的操作方法
+from superbsapi import *
+
+from BaseDB import BaseDB
+from db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ
+from db_def.def_type import type_map
+from exception import DBError, DataError
+
+
+class MQ(BaseDB):
+
+    def open(self, name: str, pwd: str = '', host: str = None, port: str = None,
+             flag: int = None, path_flag: bool = False):
+        """
+        打开消息队列（打开不存在的消息队列会自动创建）
+
+        :param name: 队列名称
+        :param pwd: 密码
+        :param host: 主机名
+        :param port: 端口号
+        :param flag: 创建的队列类型，默认普通队列，如果需要创建优先队列或其他类型请自行传值
+        :param path_flag: 不存在的队列是否需要自动创建
+        :return: 类对象
+        """
+        host = host or self.host
+        port = port or self.port
+
+        if path_flag:
+            open_flag = BSMQ_OF_OPENEXIST if name in self.mq_list(host, port) else BSMQ_OF_CREATENEW
+        else:
+            open_flag = BSMQ_OF_OPENEXIST
+        flag = flag or BSMQ_OT_COMMONMQ
+
+        try:
+            self.exec_bs('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
+        except DBError:
+            try:
+                self.exec_bs('bs_mq_open', name, pwd, open_flag, flag, host, port)
+            except DBError as e:
+                raise DBError(e.err_code, '打开消息队列[%s]失败' % name)
+
+        return self
+
+    def mq_list(self, host: str = None, port: str = None) -> list:
+        """
+        获取所有mq名称列表
+        """
+        host = host or self.host
+        port = port or self.port
+
+        mq_list = list()
+        self.exec_bs('bs_mq_query_all_names', mq_list, host, port)
+        return mq_list
+
+    def push(self, data: str, data_type: int = None, label: str = '', level: int = 1) -> None:
+        """
+        推送数据到消息队列
+        :param data: 要推送的数据
+        :param data_type: 数据的类型，不传会自动获取
+        :param label: 数据标识
+        :param level: 优先级（仅对优先队列有效）
+        :return:
+        """
+        if data_type:
+            pass
+        elif type_map.get(type(data).__name__):
+            data_type = type_map[type(data).__name__]
+        else:
+            raise DataError('无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于type_map中添加此类型')
+
+        self.exec_tree('bs_mq_push', data, data_type, label, level)
+
+    def pop(self):
+        """
+        从消息队列中取出一条数据
+
+        """
