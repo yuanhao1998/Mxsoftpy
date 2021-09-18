@@ -7,7 +7,7 @@ from .conf_base import ConfBase
 
 class Server(ConfBase):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         super().__init__()
         self.db = getattr(self, '__db__')() if hasattr(self, '__db__') else None
         self.model = getattr(self, '__model__') if hasattr(self, '__model__') else None
@@ -27,12 +27,13 @@ class Server(ConfBase):
     def update(self, code: str,  *args, **kwargs):
         """
         更新数据的base方法
-        :param code: 要打开的键
+        :param code: 要更新的键
         """
         return self.db.update(code, **self.model(*args, **kwargs).dict())
 
-    def delete(self, *args, **kwargs):
+    def delete(self, code: str, *args, **kwargs):
         """
         删除数据的base方法
+        :param code: 要删除的键
         """
-        return self.db.delete(**self.model(*args, **kwargs).dict())
+        return self.db.delete(code, *args, **kwargs)
