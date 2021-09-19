@@ -5,8 +5,8 @@
 from superbsapi import *
 
 from BaseDB import BaseDB
-from db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ
-from db_def.def_type import type_map
+from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
+from .db_def.def_type import type_map
 from exception import DBError, DataError
 
 
@@ -58,6 +58,7 @@ class MQ(BaseDB):
     def push(self, data: str, data_type: int = None, label: str = '', level: int = 1) -> None:
         """
         推送数据到消息队列
+        
         :param data: 要推送的数据
         :param data_type: 数据的类型，不传会自动获取
         :param label: 数据标识
@@ -73,8 +74,27 @@ class MQ(BaseDB):
 
         self.exec_tree('bs_mq_push', data, data_type, label, level)
 
-    def pop(self):
+    def pop(self, time_out: int = 0, is_peek: bool = False):
         """
         从消息队列中取出一条数据
-
+        :param time_out: 如果队列为空，此变量可设置等待时间，如果设置999999则认为无限等待
+        :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
+        :return: 取到的数据类
         """
+        res = self.exec_bs('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out, is_peek)
+
+        class Data:
+            def __init__(self, data: tuple):
+                self.data = data[1]
+                self.label = data[2]
+                self.time = data[3]
+
+            def __str__(self):
+                return {'data': self.data, 'label': self.label, 'time': self.time}
+
+        return Data(res)
+
+
+if __name__ == '__main__':
+    test = MQ()
+    print(test.pop())
