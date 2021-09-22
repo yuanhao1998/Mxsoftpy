@@ -31,9 +31,9 @@ class Server(ConfBase):
         """
         return self.db.update(code, **self.model(*args, **kwargs).dict())
 
-    def delete(self, code: str, *args, **kwargs):
+    def delete(self, code: str):
         """
         删除数据的base方法
         :param code: 要删除的键
         """
-        return self.db.delete(code, *args, **kwargs)
+        return self.db.delete(code)
