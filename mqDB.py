@@ -15,14 +15,14 @@ class MQ(BaseDB):
     def open(self, name: str, pwd: str = '', host: str = None, port: str = None,
              flag: int = None, path_flag: bool = False):
         """
-        打开消息队列（打开不存在的消息队列会自动创建）
+        打开消息队列
 
         :param name: 队列名称
         :param pwd: 密码
         :param host: 主机名
         :param port: 端口号
         :param flag: 创建的队列类型，默认普通队列，如果需要创建优先队列或其他类型请自行传值
-        :param path_flag: 不存在的队列是否需要自动创建
+        :param path_flag: 不存在的队列是否需要自动创建（默认不自动创建）
         :return: 类对象
         """
         host = host or self.host
