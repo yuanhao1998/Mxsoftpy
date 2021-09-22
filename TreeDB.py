@@ -5,7 +5,7 @@
 import logging
 from typing import List, Any, Union
 
-from superbsapi import *
+from superbsapi import CBSHandleLoc
 
 from .BaseDB import BaseDB
 from .exception import DBError, DataError

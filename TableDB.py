@@ -4,7 +4,7 @@
 # @Remark   : 存放Table db数据库的操作方法
 from typing import Type, List
 
-from superbsapi import *
+from superbsapi import CBSHandleLoc
 
 from .BaseDB import BaseDB
 from .db_def.def_table import *

@@ -10,4 +10,6 @@ from .view import View, Response
 from .model import Model
 from .server import Server
 from .TreeDB import TreeDB
+from .TableDB import TableDB
+from .mqDB import MQ
 from .DB import DB

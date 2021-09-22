@@ -14,6 +14,7 @@ from .db_def.db_error import BS_NOERROR
 class BaseDB:
     def __init__(self, host=None, port=None) -> None:
         self.__chl = CBSHandleLoc()
+        self.__handle = None
         try:
             from utils.conf.mxconfig import MxConfig
             self.host = host or MxConfig.HOST
@@ -39,7 +40,7 @@ class BaseDB:
 
     def exec_tree(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, tuple, None]:
         """
-        用于执行Tree db开头的函数
+        用于执行Tree开头的函数
 
         :param operate: 使用的函数
         :param args kwargs: 函数所使用的变量
@@ -60,15 +61,41 @@ class BaseDB:
         res = eval(operate)(self.__chl.GetConfHandle(), *args, **kwargs)
         return self.return_value(res)
 
-    def exec_class(self, operator: str, *args, **kwargs):
+    def exec_class(self, operate: str, *args, **kwargs):
         """
         用于执行类方法
 
-        :param operator: 使用的函数
+        :param operate: 使用的函数
+        :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        func = getattr(CBSHandleLoc, operator)
+        func = getattr(CBSHandleLoc, operate)
         res = func(*args, **kwargs)
+        return self.return_value(res)
+
+    def exec(self, operate: str, *args, **kwargs):
+        """
+        用于执行直接连接的函数（不在CBSHandleLoc类中的连接函数）
+
+        :param operate: 使用的函数
+        :param args kwargs: 函数所使用的变量
+        :return: 执行结果
+        """
+        res, self.__handle = eval(operate)(*args, **kwargs)
+        return self.return_value(res)
+
+    def exec_handle(self, operate: str, *args, **kwargs):
+        """
+        用于使用上面连接所产生handle的函数
+
+        :param operate: 使用的函数
+        :param args kwargs: 函数所使用的变量
+        :return: 执行结果
+        """
+        if self.__handle:
+            res = eval(operate)(self.__handle, *args, **kwargs)
+        else:
+            raise DataError('找不到句柄，请先连接到数据库')
         return self.return_value(res)
 
     @staticmethod

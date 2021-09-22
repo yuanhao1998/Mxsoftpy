@@ -5,12 +5,12 @@
 from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
 from .db_def.def_type import type_map
-from exception import DBError, DataError
+from .exception import DBError, DataError
 
 
 class MQ(BaseDB):
 
-    def open(self, name: str, pwd: str = '', host: str = None, port: str = None,
+    def open(self, name: str, pwd: str = '', host: str = None, port: int = None,
              flag: int = None, path_flag: bool = False):
         """
         打开消息队列
@@ -33,10 +33,10 @@ class MQ(BaseDB):
         flag = flag or BSMQ_OT_COMMONMQ
 
         try:
-            self.exec_bs('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
-        except DBError:
+            self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
+        except (DBError, DataError):
             try:
-                self.exec_bs('bs_mq_open', name, pwd, open_flag, flag, host, port)
+                self.exec('bs_mq_open', name, pwd, open_flag, flag, host, port)
             except DBError as e:
                 raise DBError(e.err_code, '打开消息队列[%s]失败' % name)
 
@@ -50,7 +50,7 @@ class MQ(BaseDB):
         port = port or self.port
 
         mq_list = list()
-        self.exec_bs('bs_mq_query_all_names', mq_list, host, port)
+        self.exec_handle('bs_mq_query_all_names', mq_list, host, port)
         return mq_list
 
     def push(self, data: str, data_type: int = None, label: str = '', level: int = 1) -> None:
@@ -70,7 +70,7 @@ class MQ(BaseDB):
         else:
             raise DataError('无法获取到value的类型！如果您未手动传入类型或确信传入类型正确，请于type_map中添加此类型')
 
-        self.exec_tree('bs_mq_push', data, data_type, label, level)
+        self.exec_handle('bs_mq_push', data, data_type, label, level)
 
     def pop(self, time_out: int = 0, is_peek: bool = False):
         """
@@ -79,7 +79,13 @@ class MQ(BaseDB):
         :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
         :return: 取到的数据类
         """
-        res = self.exec_bs('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out, is_peek)
+        try:
+            res = self.exec_handle('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out, is_peek)
+        except DBError as e:
+            if e.err_code == 131:
+                res = (None, None, None, None, None)
+            else:
+                raise DBError(e.err_code, e.msg)
 
         class Data:
             def __init__(self, data: tuple):
@@ -88,6 +94,6 @@ class MQ(BaseDB):
                 self.time = data[3]
 
             def __str__(self):
-                return {'data': self.data, 'label': self.label, 'time': self.time}
+                return str({'data': self.data, 'label': self.label, 'time': self.time})
 
         return Data(res)
