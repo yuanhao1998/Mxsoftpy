@@ -2,9 +2,7 @@
 # @Create   : 2021/9/18 14:22
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
-from superbsapi import *
-
-from BaseDB import BaseDB
+from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
 from .db_def.def_type import type_map
 from exception import DBError, DataError
@@ -93,8 +91,3 @@ class MQ(BaseDB):
                 return {'data': self.data, 'label': self.label, 'time': self.time}
 
         return Data(res)
-
-
-if __name__ == '__main__':
-    test = MQ()
-    print(test.pop())
