@@ -254,7 +254,7 @@ class TreeDB(BaseDB):
         :param overwrite: 是否覆盖原值
         """
 
-        return self.exec_bs('bs_treedb_insert_propertys', self._generation_items(items), overwrite)
+        return self.exec_bs('bs_treedb_insert_propertys', self._generation_items(items), overwrite) if items else 0
 
     def insert_key_items(self, items: Union[List[tuple], dict], key: str = None) -> str:
         """
@@ -270,7 +270,7 @@ class TreeDB(BaseDB):
         """
 
         return self.exec_bs('bs_treedb_insert_key_and_properties', key or '', TRDB_OPKF_OPENEXIST,
-                            self._generation_items(items), True)
+                            self._generation_items(items), True) if items else 0
 
     def delete(self, keys: Union[list, str, None] = None) -> None:
         """
