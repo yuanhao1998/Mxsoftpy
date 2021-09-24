@@ -34,3 +34,31 @@ type_map = {
     'ConstrainedDecimalValue': VDT_TIME
     # 其他的类型，以后用到了再添加
 }
+
+type_c_python = {
+    VDT_STR: 'str',
+    VDT_FLOAT: 'float',
+    VDT_DOUBLE: 'float',
+    VDT_I8: 'int',
+    VDT_I32: 'int',
+    VDT_I64: 'int',
+    VDT_UI8: 'int',
+    VDT_UI64: 'int',
+    VDT_TIME: 'int',
+    VDT_TIMESTR: 'str',
+    VDT_EMPTY: 'NoneType'
+}
+
+type_c_str = {
+    VDT_EMPTY: 'VDT_EMPTY',
+    VDT_STR: 'VDT_STR',
+    VDT_I32: 'VDT_I32',
+    VDT_I64: 'VDT_I64',
+    VDT_I8: 'VDT_I8',
+    VDT_DOUBLE: 'VDT_DOUBLE',
+    VDT_FLOAT: 'VDT_FLOAT',
+    VDT_TIME: 'VDT_TIME',
+    VDT_UI8: 'VDT_UI8',
+    VDT_UI64: 'VDT_UI64',
+    VDT_TIMESTR: 'VDT_TIMESTR'
+}
