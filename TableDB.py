@@ -26,8 +26,8 @@ symbol_map = {
 
 class TableDB(BaseDB):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, host=None, port=None):
+        super().__init__(host, port)
         self.__table = None
 
     def open(self, file: str, table: str = None, host: str = None, port: str = None):
