@@ -2,6 +2,7 @@
 # @Create   : 2021/9/13 9:12
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法
+import logging
 from typing import Type, List, Any
 
 from superbsapi import CBSHandleLoc
@@ -47,6 +48,7 @@ class TableDB(BaseDB):
             try:
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host, file, port)
+                logging.warning('正在重新连接数据库并打开table[%s]' % file)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 

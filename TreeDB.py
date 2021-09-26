@@ -100,9 +100,9 @@ class TreeDB(BaseDB):
                 self.exec_tree('Treedb_ReopenMainKey', sub_key, flag, path_flag, main_key, main_key_pwd, file)
             except DBError:
                 try:
-                    logging.warning('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
                     self.__chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
+                    logging.warning('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
                 except DBError as e:
                     raise DBError(e.err_code, '打开主键[%s]-子键[%s]时' % (main_key, sub_key))
@@ -114,9 +114,9 @@ class TreeDB(BaseDB):
                     self.exec_tree('Treedb_ReopenMainKey', '', flag, path_flag, main_key, main_key_pwd, file)
                 except DBError:
                     try:
-                        logging.warning('正在重新连接数据库并打开主键[%s]' % main_key)
                         self.__chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
+                        logging.warning('正在重新连接tree数据库并打开主键[%s]' % main_key)
                     except DBError as e:
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         return self
