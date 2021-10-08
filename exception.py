@@ -4,12 +4,8 @@
 # @Remark   : 在此编写所有自定义异常类
 import json
 
+from .db_def.db_error import error_dict
 from .def_http_code import HttpCode
-
-try:
-    from utils.conf.db_error import error_dict
-except (ModuleNotFoundError, ImportError):
-    error_dict = dict()
 
 
 class MxBaseException(Exception):
