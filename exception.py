@@ -8,7 +8,7 @@ from .def_http_code import HttpCode
 
 try:
     from utils.conf.db_error import error_dict
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     error_dict = dict()
 
 
