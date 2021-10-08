@@ -146,3 +146,17 @@ class FileError(MxBaseException):
             msg = '%s: 文件读取错误' % self.msg
 
         return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+
+
+class AuthError(MxBaseException):
+    """
+    权限异常
+    """
+
+    def __str__(self):
+        if not self.msg:
+            msg = '权限错误'
+        else:
+            msg = '%s: 权限错误' % self.msg
+
+        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)

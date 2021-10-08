@@ -7,7 +7,7 @@ import json
 from urllib.parse import unquote
 
 from .conf_base import ConfBase
-from .exception import CError, HTTPMethodError, DataError
+from .exception import CError, HTTPMethodError, DataError, AuthError
 from .def_http_code import HttpCode, HttpType
 
 
@@ -33,6 +33,53 @@ class Request(ConfBase):
         self._web_path = None
         self._request_type = None
         self._content_type = None
+        self._session_id = None
+        self._company = None
+        self._user = None
+
+    @property
+    def session_id(self):
+        """
+        获取session id
+        """
+        if self._session_id:
+            return self._session_id
+        else:
+            from mxsoft import CheckMxSession
+            self._session_id = CheckMxSession(self.session)
+            return self._session_id
+
+    @property
+    def company(self):
+        """
+        获取公司
+        """
+        if self._company:
+            return self._company
+        else:
+            from bsmiddle import GetSessionCompany
+            flag, company = GetSessionCompany(self.session_id)
+            if flag:
+                self._company = company
+                return self._company
+            else:
+                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+
+    @property
+    def user(self):
+        """
+        获取用户
+        """
+        if self._user:
+            return self._user
+        else:
+            from bsmiddle import GetSessionUserId
+            flag, user = GetSessionUserId(self.session_id)
+            if flag:
+                self._user = user
+                return self._user
+            else:
+                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
 
     @property
     def request_headers_cls(self):
