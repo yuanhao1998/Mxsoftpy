@@ -2,6 +2,7 @@
 # @Create   : 2021/9/13 9:12
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法
+import datetime
 import logging
 from typing import Type, List, Any
 
@@ -144,6 +145,46 @@ class TableDB(BaseDB):
                 type(value).__name__, type_c_str[value_type], type_c_python[value_type]))
 
         return value
+
+    class __TimeDelta(object):
+        def __init__(self, **kwargs):
+            self._query = dict()
+            for k, v in kwargs.items():
+                if k in ['days', 'seconds', 'microseconds', 'milliseconds', 'minutes', 'hours', 'weeks'] and isinstance(
+                        v, (float, int)):
+                    self._query[k] = v
+
+        def res(self):
+            return self._query
+
+    def record_by_time(self, table_name: str = None, start_time: int = None, end_time: int = None, count=0,
+                       **kwargs) -> list:
+        """
+        根据时间获取记录
+        :param table_name: 要获取的表名
+        :param start_time: 开始时间戳
+        :param end_time: 结束时间戳
+        :param count: 要获取的条数，为0则获取所有
+        :param kwargs: 时间参数 ['days', 'seconds', 'microseconds', 'milliseconds', 'minutes', 'hours', 'weeks']
+        :return:
+        """
+        self.__table = table_name or self.__table
+        res = list()
+        if not self.__table:
+            raise DataError('找不到table，请打开或传入表')
+        if start_time is None and end_time is None:
+            now = datetime.datetime.now()
+            end_time = int(now.timestamp())
+            start_time = int((now - datetime.timedelta(**self.__TimeDelta(**kwargs).res())).timestamp())
+        elif start_time is not None and end_time is None:
+            end_time = int((datetime.datetime.fromtimestamp(start_time) + datetime.timedelta(
+                **self.__TimeDelta(**kwargs).res())).timestamp())
+        elif start_time is None and end_time is not None:
+            start_time = int((datetime.datetime.fromtimestamp(end_time) - datetime.timedelta(
+                **self.__TimeDelta(**kwargs).res())).timestamp())
+
+        self.exec_tree('Tabledb_SelectRecordsByCTime', self.__table, count, start_time, end_time, res)
+        return res
 
     def filter(self, table_name: str = None, count: int = 0, **kwargs) -> List[dict]:
         """
