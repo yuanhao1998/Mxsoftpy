@@ -24,7 +24,7 @@ class BaseDB:
             self.port = port or 8123
 
     @staticmethod
-    def return_value(res: tuple) -> Union[int, tuple, None]:
+    def return_value(res: tuple) -> Union[int, str, tuple, None]:
         """
         用于直接返回结果集的函数，处理其返回值
 
@@ -38,7 +38,7 @@ class BaseDB:
             return res[1] if len(res) == 2 else res[1:]
         return None
 
-    def exec_tree(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, tuple, None]:
+    def exec_tree(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
         """
         用于执行Tree开头的函数
 

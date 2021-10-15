@@ -216,7 +216,7 @@ class TreeDB(BaseDB):
         """
         return self.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
-    def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> None:
+    def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
         """
         批量插入子键
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_sub_keys(['test1', 'test2'])
@@ -225,9 +225,12 @@ class TreeDB(BaseDB):
         :param flag: 打开风格
         """
         if isinstance(sub_keys, str):
-            sub_keys = [sub_keys]
-        for sub_key in sub_keys:
-            self.exec_tree('Treedb_InsertSubKey', sub_key, flag)
+            return self.exec_tree('Treedb_InsertSubKey', sub_keys, flag)
+        else:
+            res = []
+            for sub_key in sub_keys:
+                res.append(self.exec_tree('Treedb_InsertSubKey', sub_key, flag))
+            return res
 
     def insert_item(self, prop: str, value: Any, value_type: str = None, overwrite: bool = True) -> int:
         """
