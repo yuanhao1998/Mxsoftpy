@@ -121,21 +121,21 @@ class TreeDB(BaseDB):
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         return self
 
-    def main_keys(self, host: str = None, file: str = 'base', port: int = None) -> list:
+    @classmethod
+    def main_keys(cls, file: str, host: str = None, port: int = None) -> list:
         """
-        获取所有主键
-        eg: sub_keys = db.open('MXSE', '1.SD', file='ccubase').main_keys()
+        获取数据库下所有的主键
+        eg: TreeDB.main_keys(file='master', host='127.0.0.1', port=8123)
 
-        :param host: 主机名
         :param file: 数据库名
-        :param port: 端口号
-        :return: 主键列表
+        :param host: 主机
+        :param port: 端口
         """
-        host = host or self.host
-        port = port or self.port
+
+        host, port = cls._check_conn_params(cls, host, port)
 
         res_list = list()
-        self.exec_tree('Treedb_GetAllMainKeyNames', res_list, host, file, port)
+        cls.exec_class('Treedb_GetAllMainKeyNames', res_list, host, file, port)
         return res_list
 
     def sub_keys(self) -> list:
@@ -203,18 +203,34 @@ class TreeDB(BaseDB):
         """
         return self.exec_tree('Treedb_GetProperty', prop_name)
 
-    def insert_main_key(self, main_key: str, host: str, file: str,  main_pwd: str = '', port: int = 0):
+    @classmethod
+    def insert_file(cls, file_name: str, host: str = None, port: int = None) -> int:
+        """
+        插入数据库
+
+        :param file_name: 数据库名称
+        :param host: 主机ip
+        :param port: 端口
+        """
+
+        host, port = cls._check_conn_params(cls, host, port)
+        return cls.exec_class('Treedb_CreateFile', host, file_name, port)
+
+    @classmethod
+    def insert_main_key(cls, main_key: str, file: str, main_pwd: str = '', host: str = None, port: int = None) -> int:
         """
         插入主键
         eg: db.insert_main_key('test', host='127.0.0.1', file='IOT')
 
         :param main_key: 主键名
         :param file: 文件名
-        :param host: 主机ip
         :param main_pwd: 主键密码
-        :param port:
+        :param host: 主机ip
+        :param port: 端口
         """
-        return self.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
+
+        host, port = cls._check_conn_params(cls, host, port)
+        return cls.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
     def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
         """

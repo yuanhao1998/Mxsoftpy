@@ -12,7 +12,13 @@ from .db_def.db_error import BS_NOERROR
 
 
 class BaseDB:
+
     def __init__(self, host=None, port=None) -> None:
+        """
+        初始化属性
+        :param host: 主机
+        :param port: 端口
+        """
         self.__chl = CBSHandleLoc()
         self.__handle = None
         try:
@@ -22,6 +28,7 @@ class BaseDB:
         except (ModuleNotFoundError, ImportError, AttributeError):
             self.host = host or '127.0.0.1'
             self.port = port or 8123
+        self.__cls_value(self.host, self.port)
 
     @staticmethod
     def return_value(res: tuple) -> Union[int, str, tuple, None]:
@@ -61,7 +68,8 @@ class BaseDB:
         res = eval(operate)(self.__chl.GetConfHandle(), *args, **kwargs)
         return self.return_value(res)
 
-    def exec_class(self, operate: str, *args, **kwargs):
+    @classmethod
+    def exec_class(cls, operate: str, *args, **kwargs):
         """
         用于执行类方法
 
@@ -71,7 +79,7 @@ class BaseDB:
         """
         func = getattr(CBSHandleLoc, operate)
         res = func(*args, **kwargs)
-        return self.return_value(res)
+        return cls.return_value(res)
 
     def exec(self, operate: str, *args, **kwargs):
         """
@@ -115,7 +123,6 @@ class BaseDB:
     def _generation_items(self, items: Union[List[tuple], dict]) -> list:
         """
         生成符合数据库插入格式的数据
-        :return:
         """
         data_list = list()
         if isinstance(items, list):
@@ -131,3 +138,29 @@ class BaseDB:
             raise DataError('错误的数据类型，items应为列表或字典')
 
         return data_list
+
+    @classmethod
+    def __cls_value(cls, host=None, port=None) -> None:
+        """
+        将实例属性添加到类属性
+        :param host: 主机
+        :param port: 端口
+        """
+        cls.host = host
+        cls.port = port
+
+    @staticmethod
+    def _check_conn_params(cls, host, port) -> tuple:
+        """
+        获取并检查连接参数并返回
+        :param cls: 类
+        :param host: 主机ip
+        :param port: 端口
+        """
+        host = host or getattr(cls, 'host', None)
+        port = port or getattr(cls, 'port', None)
+
+        if not host or not port:
+            raise DataError('无法获取主机或端口，请实例化类或直接传递参数')
+
+        return host, port
