@@ -97,3 +97,18 @@ class MQ(BaseDB):
                 return str({'data': self.data, 'label': self.label, 'time': self.time})
 
         return Data(res)
+
+    def length(self):
+        """
+        获取一个打开MQ中的消息个数
+        return：如果成功返回消息个数，否则返回错误码
+        """
+        try:
+            res = self.exec_handle('bs_mq_length')
+        except DBError as e:
+            if e.err_code == 131:
+                res = (None, None, None, None, None)
+            else:
+                raise DBError(e.err_code, e.msg)
+
+        return res
