@@ -239,6 +239,20 @@ class Request(ConfBase):
             self._POST = data
             return self._POST
 
+    @property
+    def PUT(self) -> dict:
+        """
+        获取put方法传递参数
+        """
+        return self.POST
+
+    @property
+    def DELETE(self) -> dict:
+        """
+        获取delete方法传递的参数
+        """
+        return self.GET
+
     def _post_form_data(self):
         """
         解析form-data

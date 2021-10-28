@@ -207,6 +207,7 @@ class TreeDB(BaseDB):
     def insert_file(cls, file_name: str, host: str = None, port: int = None) -> int:
         """
         插入数据库
+        eg: TreeDB.insert_file('test', host='127.0.0.1', port=8123)
 
         :param file_name: 数据库名称
         :param host: 主机ip
