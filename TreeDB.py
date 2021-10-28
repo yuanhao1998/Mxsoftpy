@@ -11,6 +11,7 @@ from .BaseDB import BaseDB
 from .exception import DBError, DataError
 from .db_def.def_type import *
 from .db_def.def_tree import *
+from .globals import request
 
 symbol_map = {
     'e': TRDB_FMC_EQUAL,  # 等于
@@ -69,7 +70,7 @@ class TreeDB(BaseDB):
         # TODO 用到了再写吧
         # return self.exec_bs('bs_treedb_delete_index')
 
-    def open(self, main_key: str, sub_key: str = None, host: str = None, file: str = 'base',
+    def open(self, main_key: str, sub_key: str = None, host: str = None, file: str = None,
              main_key_pwd: str = '', flag: int = None, port: int = None, path_flag: bool = False) -> "TreeDB":
         """
         打开数据库键 [只打开主键或子键 / 同时打开主键和子键（子键路径）]
@@ -88,6 +89,7 @@ class TreeDB(BaseDB):
         """
         host = host or self.host
         port = port or self.port
+        file = file or self._get_file(file)
 
         if not flag:
             if sub_key:

@@ -4,6 +4,7 @@
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
 from typing import Union, Any, List
 
+from .globals import request
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
 from superbsapi import *
@@ -164,3 +165,20 @@ class BaseDB:
             raise DataError('无法获取主机或端口，请实例化类或直接传递参数')
 
         return host, port
+
+    @staticmethod
+    def _get_file(file: str) -> str:
+        """
+        判断所使用的数据库，优先层次：
+                                1：传入参数
+                                2：当前公司同名数据库
+                                3：base
+        """
+        if file:
+            return file
+        else:
+            # noinspection PyBroadException
+            try:
+                return request().company
+            except Exception:
+                return 'base'

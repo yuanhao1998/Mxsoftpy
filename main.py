@@ -17,6 +17,8 @@ from .view import Request, Response
 if t.TYPE_CHECKING:
     from .module import Module
 
+session_handler: Request   # session处理类
+
 
 class Mx(BaseMx):
     """
@@ -97,6 +99,10 @@ class Mx(BaseMx):
         :return:
         """
         self.session_handler = Request(session)
+
+        global session_handler
+        session_handler = self.session_handler
+        
         url = self.session_handler.url
         if url is None:
             url = ''
