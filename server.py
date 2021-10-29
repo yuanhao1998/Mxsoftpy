@@ -37,3 +37,10 @@ class Server(ConfBase):
         :param code: 要删除的键
         """
         return self.db.delete(code)
+
+    def retrieve(self, code: str):
+        """
+        获取单个数据详情的base方法
+        :param code: 要获取详情的键
+        """
+        return self.db.retrieve(code)
