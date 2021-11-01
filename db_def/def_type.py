@@ -15,6 +15,16 @@ VDT_UI8 = 0x10
 VDT_UI64 = 0x13
 VDT_TIMESTR = 0x30
 
+I32 = type('i32', (int, ), {})
+double = type('double', (int, ), {})
+int8 = type('int8', (int, ), {})
+int64 = type('int64', (int, ), {})
+ui8 = type('ui8', (int, ), {})
+ui64 = type('ui64', (int, ), {})
+time = type('time', (int, ), {})
+timestr = type('timestr', (int, ), {})
+empty = type('empty', (int, ), {})
+
 type_map = {
     'str': VDT_STR,
     'float': VDT_FLOAT,

@@ -4,6 +4,8 @@
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
 from typing import Union, Any, List
 
+from mxsoftpy import Model
+
 from .globals import request
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
@@ -121,7 +123,7 @@ class BaseDB:
         value_type = type_map[item[2]] if len(item) == 3 else type_map[type(item[1]).__name__]
         return value_type
 
-    def _generation_items(self, items: Union[List[tuple], dict]) -> list:
+    def _generation_items(self, items: Union[List[tuple], dict, Model]) -> list:
         """
         生成符合数据库插入格式的数据
         """
@@ -135,6 +137,14 @@ class BaseDB:
                     data_list.append({'name': k, 'value': v, 'valuetype': type_map[type(v).__name__]})
                 else:
                     raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(v)), v))
+        elif isinstance(items, Model):
+            for field in items.__fields__.values():
+                if type_map.get(field.type_.__name__):
+                    data_list.append({'name': field.name, 'value': getattr(items, field.name),
+                                      'valuetype': type_map[field.type_.__name__]})
+                else:
+                    raise DataError('不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
+
         else:
             raise DataError('错误的数据类型，items应为列表或字典')
 

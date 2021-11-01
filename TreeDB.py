@@ -11,7 +11,6 @@ from .BaseDB import BaseDB
 from .exception import DBError, DataError
 from .db_def.def_type import *
 from .db_def.def_tree import *
-from .globals import request
 
 symbol_map = {
     'e': TRDB_FMC_EQUAL,  # 等于
