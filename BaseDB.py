@@ -24,13 +24,7 @@ class BaseDB:
         """
         self.__chl = CBSHandleLoc()
         self.__handle = None
-        try:
-            from utils.conf.mxconfig import MxConfig
-            self.host = host or MxConfig.HOST
-            self.port = port or MxConfig.PORT
-        except (ModuleNotFoundError, ImportError, AttributeError):
-            self.host = host or '127.0.0.1'
-            self.port = port or 8123
+        self.host, self.port = host, port
         self.__cls_value(self.host, self.port)
 
     @staticmethod
@@ -177,18 +171,44 @@ class BaseDB:
         return host, port
 
     @staticmethod
-    def _get_file(file: str) -> str:
+    def _get_file() -> str:
         """
         判断所使用的数据库，优先层次：
-                                1：传入参数
-                                2：当前公司同名数据库
-                                3：base
+                                1：当前公司同名数据库
+                                2：base
         """
-        if file:
-            return file
+        # noinspection PyBroadException
+        try:
+            return request().company
+        except Exception:
+            return 'base'
+
+    def _get_host_port(self, file: str) -> tuple:
+        """
+        判断使用的ip及端口，优先层次：
+                                1：实例化时传递的参数
+                                2：c++缓存的数据
+                                3：python配置的数据
+                                4：默认数据
+
+        :param file:
+        :return:
+        """
+        if self.host and self.port:
+            return self.host, self.port
+
         else:
+            from bsmiddle import DbServer_GetDataSource
             # noinspection PyBroadException
             try:
-                return request().company
-            except Exception:
-                return 'base'
+                host, port = DbServer_GetDataSource(request().company, file)
+            except BaseException:
+                try:
+                    from utils.conf.mxconfig import MxConfig
+                    host = MxConfig.HOST
+                    port = MxConfig.PORT
+                except (ModuleNotFoundError, ImportError, AttributeError):
+                    host = '127.0.0.1'
+                    port = 8123
+
+            return self.host or host, self.port or port

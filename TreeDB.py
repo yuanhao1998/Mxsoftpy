@@ -86,9 +86,9 @@ class TreeDB(BaseDB):
         :param path_flag: 如果路径上有子键不存在是否自动创建
         :return: 类对象
         """
-        host = host or self.host
-        port = port or self.port
-        file = file or self._get_file(file)
+        file = file or self._get_file()
+        _host, _port = self._get_host_port(file)
+        host, port = host or _host, port or _port
 
         if not flag:
             if sub_key:
