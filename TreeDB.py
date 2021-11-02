@@ -87,8 +87,6 @@ class TreeDB(BaseDB):
         :return: 类对象
         """
         file = file or self._get_file()
-        _host, _port = self._get_host_port(file)
-        host, port = host or _host, port or _port
 
         if not flag:
             if sub_key:
@@ -97,6 +95,8 @@ class TreeDB(BaseDB):
                 flag = TRDB_OPKF_OPENEXIST if '\\' in main_key else TRDB_OPKF_DOTPATH
 
         if sub_key:
+            _host, _port = self._get_host_port(main_key)
+            host, port = host or _host, port or _port
             try:
                 self.exec_tree('Treedb_ReopenMainKey', sub_key, flag, path_flag, main_key, main_key_pwd, file)
             except DBError:
@@ -115,6 +115,8 @@ class TreeDB(BaseDB):
                     self.exec_tree('Treedb_ReopenMainKey', '', flag, path_flag, main_key, main_key_pwd, file)
                 except DBError:
                     try:
+                        _host, _port = self._get_host_port(main_key)
+                        host, port = host or _host, port or _port
                         self.__chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                         logging.warning('正在重新连接tree数据库并打开主键[%s]' % main_key)

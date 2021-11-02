@@ -183,17 +183,8 @@ class BaseDB:
         except Exception:
             return 'base'
 
-    def _get_host_port(self, file: str) -> tuple:
-        """
-        判断使用的ip及端口，优先层次：
-                                1：实例化时传递的参数
-                                2：c++缓存的数据
-                                3：python配置的数据
-                                4：默认数据
+    def _get_host_port(self, key: str) -> tuple:
 
-        :param file:
-        :return:
-        """
         if self.host and self.port:
             return self.host, self.port
 
@@ -201,7 +192,7 @@ class BaseDB:
             from bsmiddle import DbServer_GetDataSource
             # noinspection PyBroadException
             try:
-                host, port = DbServer_GetDataSource(request().company, file)
+                host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
             except BaseException:
                 try:
                     from utils.conf.mxconfig import MxConfig
