@@ -189,9 +189,9 @@ class BaseDB:
             return self.host, self.port
 
         else:
-            from bsmiddle import DbServer_GetDataSource
             # noinspection PyBroadException
             try:
+                from bsmiddle import DbServer_GetDataSource
                 host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
             except BaseException:
                 try:
