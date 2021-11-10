@@ -2,7 +2,7 @@
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
-from typing import Union, Any, List
+from typing import Union, Any, List, Type
 
 from mxsoftpy import Model
 
@@ -155,18 +155,17 @@ class BaseDB:
         cls.port = port
 
     @staticmethod
-    def _check_conn_params(cls, host, port) -> tuple:
+    def _check_conn_params(cls: Type["BaseDB"], host, port, name) -> tuple:
         """
         获取并检查连接参数并返回
         :param cls: 类
         :param host: 主机ip
         :param port: 端口
+        :param name: key名
         """
-        host = host or getattr(cls, 'host', None)
-        port = port or getattr(cls, 'port', None)
-
         if not host or not port:
-            raise DataError('无法获取主机或端口，请实例化类或直接传递参数')
+            _host, _port = cls._get_host_port2(name)
+            host, port = host or _host, port or _port
 
         return host, port
 
@@ -183,23 +182,26 @@ class BaseDB:
         except Exception:
             return 'base'
 
+    @staticmethod
+    def _get_host_port2(key):
+        # noinspection PyBroadException
+        try:
+            from bsmiddle import DbServer_GetDataSource
+            host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
+        except BaseException:
+            try:
+                from utils.conf.mxconfig import MxConfig
+                host = MxConfig.HOST
+                port = MxConfig.PORT
+            except (ModuleNotFoundError, ImportError, AttributeError):
+                host = '127.0.0.1'
+                port = 8123
+        return host, port
+
     def _get_host_port(self, key: str) -> tuple:
 
         if self.host and self.port:
             return self.host, self.port
-
         else:
-            # noinspection PyBroadException
-            try:
-                from bsmiddle import DbServer_GetDataSource
-                host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
-            except BaseException:
-                try:
-                    from utils.conf.mxconfig import MxConfig
-                    host = MxConfig.HOST
-                    port = MxConfig.PORT
-                except (ModuleNotFoundError, ImportError, AttributeError):
-                    host = '127.0.0.1'
-                    port = 8123
-
+            host, port = self._get_host_port2(key)
             return self.host or host, self.port or port

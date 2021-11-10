@@ -47,6 +47,8 @@ class TableDB(BaseDB):
             self.exec_tree('Tabledb_ReopenDb', file)
         except DBError:
             try:
+                _host, _port = self._get_host_port(table)
+                host, port = host or _host, port or _port
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host, file, port)
                 logging.warning('正在重新连接数据库并打开table[%s]' % file)

@@ -23,8 +23,8 @@ class MQ(BaseDB):
         :param path_flag: 不存在的队列是否需要自动创建（默认不自动创建）
         :return: 类对象
         """
-        host = host or self.host
-        port = port or self.port
+        _host, _port = self._get_host_port(name)
+        host, port = host or _host, port or _port
 
         if path_flag:
             open_flag = BSMQ_OF_OPENEXIST if name in self.mq_list(host, port) else BSMQ_OF_CREATENEW

@@ -95,12 +95,12 @@ class TreeDB(BaseDB):
                 flag = TRDB_OPKF_OPENEXIST if '\\' in main_key else TRDB_OPKF_DOTPATH
 
         if sub_key:
-            _host, _port = self._get_host_port(main_key)
-            host, port = host or _host, port or _port
             try:
                 self.exec_tree('Treedb_ReopenMainKey', sub_key, flag, path_flag, main_key, main_key_pwd, file)
             except DBError:
                 try:
+                    _host, _port = self._get_host_port(main_key)
+                    host, port = host or _host, port or _port
                     self.__chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     logging.warning('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
@@ -135,7 +135,7 @@ class TreeDB(BaseDB):
         :param port: 端口
         """
 
-        host, port = cls._check_conn_params(cls, host, port)
+        host, port = cls._check_conn_params(cls, host, port, file)
 
         res_list = list()
         cls.exec_class('Treedb_GetAllMainKeyNames', res_list, host, file, port)
@@ -217,7 +217,7 @@ class TreeDB(BaseDB):
         :param port: 端口
         """
 
-        host, port = cls._check_conn_params(cls, host, port)
+        host, port = cls._check_conn_params(cls, host, port, file_name)
         return cls.exec_class('Treedb_CreateFile', host, file_name, port)
 
     @classmethod
@@ -233,7 +233,7 @@ class TreeDB(BaseDB):
         :param port: 端口
         """
 
-        host, port = cls._check_conn_params(cls, host, port)
+        host, port = cls._check_conn_params(cls, host, port, file)
         return cls.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
     def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
