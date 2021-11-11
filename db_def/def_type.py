@@ -15,7 +15,6 @@ VDT_UI8 = 0x10
 VDT_UI64 = 0x13
 VDT_TIMESTR = 0x30
 
-I32 = type('i32', (int, ), {})
 double = type('double', (int, ), {})
 int8 = type('int8', (int, ), {})
 int64 = type('int64', (int, ), {})
