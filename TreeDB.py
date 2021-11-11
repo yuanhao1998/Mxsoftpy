@@ -90,9 +90,9 @@ class TreeDB(BaseDB):
 
         if not flag:
             if sub_key:
-                flag = TRDB_OPKF_OPENEXIST if '\\' in sub_key else TRDB_OPKF_DOTPATH
+                flag = TRDB_OPKF_OPENEXIST if '\\' in sub_key else TRDB_OPKF_OPENEXIST | TRDB_OPKF_DOTPATH
             else:
-                flag = TRDB_OPKF_OPENEXIST if '\\' in main_key else TRDB_OPKF_DOTPATH
+                flag = TRDB_OPKF_OPENEXIST if '\\' in main_key else TRDB_OPKF_OPENEXIST | TRDB_OPKF_DOTPATH
 
         if sub_key:
             try:
