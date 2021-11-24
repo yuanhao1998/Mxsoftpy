@@ -89,6 +89,17 @@ class BaseDB:
         res, self.__handle = eval(operate)(*args, **kwargs)
         return self.return_value(res)
 
+    def exec2(self, operate: str, *args, **kwargs):
+        """
+        用于执行直接连接的函数（不在CBSHandleLoc类中且直接获取值的函数）
+
+        :param operate: 使用的函数
+        :param args kwargs: 函数所使用的变量
+        :return: 执行结果
+        """
+        res = eval(operate)(*args, **kwargs)
+        return self.return_value(res)
+
     def exec_handle(self, operate: str, *args, **kwargs):
         """
         用于使用上面连接所产生handle的函数

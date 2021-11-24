@@ -50,7 +50,7 @@ class MQ(BaseDB):
         port = port or self.port
 
         mq_list = list()
-        self.exec_handle('bs_mq_query_all_names', mq_list, host, port)
+        self.exec2('bs_mq_query_all_names', mq_list, host, port)
         return mq_list
 
     def push(self, data: str, data_type: int = None, label: str = '', level: int = 1) -> None:
