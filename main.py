@@ -81,7 +81,7 @@ class Mx(BaseMx):
         """
         request = self.set_response(request)
         if isinstance(res, Response):
-            res = str(res)
+            res = res()
         else:
             res = self.package_data(res, request.callback)
         return request.session, res

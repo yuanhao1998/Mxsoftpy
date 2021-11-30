@@ -337,6 +337,8 @@ class Response:
     def __str__(self):
         return self.msg
 
+    def __call__(self, *args, **kwargs):
+        return self.msg
 
 class View(ConfBase):
     def __init__(self, request: "Request", *args, **kwargs):

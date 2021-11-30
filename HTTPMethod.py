@@ -39,7 +39,10 @@ def send_response(session, data):
     if not session:
         return WeMr.WE_MR_BADREQUEST
     data_len = len(data)
-    data_bytes = bytes(data, encoding='utf-8')
+    if type(data) is not bytes:
+        data_bytes = bytes(data, encoding='utf-8')
+    else:
+        data_bytes = data
     if data_len > 1000:
         session.GetHttpResponseHead().SetContentLength(len(data_bytes))
         session.SendHeader()
