@@ -103,7 +103,7 @@ class TreeDB(BaseDB):
                     host, port = host or _host, port or _port
                     self.__chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
-                    logging.warning('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
+                    logging.debug('正在重新连接数据库并打开主键[%s]-子键[%s]' % (main_key, sub_key))
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
                 except DBError as e:
                     raise DBError(e.err_code, '打开主键[%s]-子键[%s]时' % (main_key, sub_key))
@@ -119,10 +119,25 @@ class TreeDB(BaseDB):
                         host, port = host or _host, port or _port
                         self.__chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
-                        logging.warning('正在重新连接tree数据库并打开主键[%s]' % main_key)
+                        logging.debug('正在重新连接tree数据库并打开主键[%s]' % main_key)
                     except DBError as e:
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         return self
+
+    @classmethod
+    def file_names(cls, host: str = None, port: int = None) -> list:
+        """
+        获取数据库所有数据库名
+        eg: TreeDB.main_keys(host='127.0.0.1', port=8123)
+
+        :param host: 主机
+        :param port: 端口
+        """
+        host, port = cls._check_conn_params(cls, host, port)
+
+        res_list = list()
+        cls.exec_class('bs_tabledb_get_all_dbnames', res_list, host, port)
+        return res_list
 
     @classmethod
     def main_keys(cls, file: str, host: str = None, port: int = None) -> list:

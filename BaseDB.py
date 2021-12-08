@@ -16,6 +16,9 @@ from .db_def.db_error import BS_NOERROR
 
 class BaseDB:
 
+    port = None
+    host = None
+
     def __init__(self, host=None, port=None) -> None:
         """
         初始化属性
@@ -166,7 +169,7 @@ class BaseDB:
         cls.port = port
 
     @staticmethod
-    def _check_conn_params(cls: Type["BaseDB"], host, port, name) -> tuple:
+    def _check_conn_params(cls: Type["BaseDB"], host, port, name=None) -> tuple:
         """
         获取并检查连接参数并返回
         :param cls: 类
@@ -175,8 +178,11 @@ class BaseDB:
         :param name: key名
         """
         if not host or not port:
-            _host, _port = cls._get_host_port2(name)
-            host, port = host or _host, port or _port
+            if not cls.host or not cls.port:
+                _host, _port = cls._get_host_port2(name)
+                host, port = host or cls.host or _host, port or cls.port or _port
+            else:
+                host, port = host or cls.host, port or cls.port
 
         return host, port
 
