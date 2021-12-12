@@ -65,7 +65,7 @@ class Mx(BaseMx):
             data = json.dumps({'status': 'success', 'errmsg': data[0], 'data': data[1] if len(data) == 2 else data[1:]},
                               ensure_ascii=False)
         else:
-            data = json.dumps({'status': 'failed', 'errmsg': data}, ensure_ascii=False)
+            data = json.dumps({'status': 'failed', 'errmsg': data, 'err_type': ''}, ensure_ascii=False)
 
         if callback:
             data = '%s(%s)' % (callback, data)
@@ -133,7 +133,8 @@ class Mx(BaseMx):
         error = json.dumps({'status': 'failed',
                             'errmsg': error_value.model.__name__ + ': 模型字段校验失败, ' +
                                       str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
-                                           for error in error_value.errors()])},
+                                           for error in error_value.errors()]),
+                            'err_type': '模型字段验证错误'},
                            ensure_ascii=False)
 
         send_response(self.session_handler.session,

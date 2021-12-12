@@ -28,12 +28,7 @@ class CError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = 'c++方法调用异常'
-        else:
-            msg = str(self.msg) + ': c++方法调用异常'
-
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': 'c++方法调用异常'}, ensure_ascii=False)
 
 
 class ModelCheckError(MxBaseException):
@@ -42,12 +37,7 @@ class ModelCheckError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '模型字段验证错误'
-        else:
-            msg = str(self.msg) + ': 模型字段验证错误'
-
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '模型字段验证错误'}, ensure_ascii=False)
 
 
 class ParamsError(MxBaseException):
@@ -56,12 +46,7 @@ class ParamsError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '参数错误'
-        else:
-            msg = str(self.msg) + ': 参数错误'
-
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '参数错误'}, ensure_ascii=False)
 
 
 class DBError(MxBaseException):
@@ -79,12 +64,10 @@ class DBError(MxBaseException):
         self.msg = msg
 
     def __str__(self):
-        if not self.msg:
-            msg = '数据库错误，错误码: %s, 错误原因: %s' % (self.err_code, error_dict.get(self.err_code))
-        else:
-            msg = '%s: 数据库错误, 错误码: %s, 错误原因: %s' % (self.msg, self.err_code, error_dict.get(self.err_code))
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg,
+                           'err_type': '数据库错误，错误码: %s, 错误原因: %s' % (self.err_code, error_dict.get(self.err_code))},
+                          ensure_ascii=False)
 
 
 class DataError(MxBaseException):
@@ -93,12 +76,8 @@ class DataError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '数据错误'
-        else:
-            msg = '%s: 数据错误' % self.msg
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '数据错误'}, ensure_ascii=False)
 
 
 class NotFoundError(MxBaseException):
@@ -108,12 +87,8 @@ class NotFoundError(MxBaseException):
     state_code = HttpCode.st_404_not_found
 
     def __str__(self):
-        if not self.msg:
-            msg = '未知的url请求'
-        else:
-            msg = str(self.msg) + ': 未知的url请求'
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '未知的url请求'}, ensure_ascii=False)
 
 
 class HTTPMethodError(MxBaseException):
@@ -122,12 +97,8 @@ class HTTPMethodError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '错误的请求方法'
-        else:
-            msg = '%s: 错误的请求方法' % self.msg
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '错误的请求方法'}, ensure_ascii=False)
 
 
 class FileError(MxBaseException):
@@ -136,12 +107,8 @@ class FileError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '文件错误'
-        else:
-            msg = '%s: 文件读取错误' % self.msg
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '文件错误'}, ensure_ascii=False)
 
 
 class AuthError(MxBaseException):
@@ -150,9 +117,5 @@ class AuthError(MxBaseException):
     """
 
     def __str__(self):
-        if not self.msg:
-            msg = '权限错误'
-        else:
-            msg = '%s: 权限错误' % self.msg
 
-        return json.dumps({'status': 'failed', 'errmsg': msg}, ensure_ascii=False)
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '权限错误'}, ensure_ascii=False)
