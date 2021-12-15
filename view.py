@@ -325,6 +325,18 @@ class Request(ConfBase):
         except TypeError:
             raise CError('session.GetHttpResponseHead().SetAddHead()')
 
+    def upload(self, path: str, overwrite=True) -> str:
+        """
+        存储上传的文件
+        :param path: 上传路径 <！！！ 只需要写上传路径，不要写文件名，此方法会返回文件名 ！！！>
+        :param overwrite: 如果已有此文件是否覆盖
+        :return: 上传的文件名
+        """
+        flag, file_name = self.session.UploadFile(path, overwrite)
+        if flag:
+            return file_name
+        raise CError("读取上传文件错误")
+
 
 class Response:
     """

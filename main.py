@@ -131,10 +131,9 @@ class Mx(BaseMx):
         self.session_handler = self.set_response(self.session_handler)
 
         error = json.dumps({'status': 'failed',
-                            'errmsg': error_value.model.__name__ + ': 模型字段校验失败, ' +
-                                      str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
+                            'errmsg': str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
                                            for error in error_value.errors()]),
-                            'err_type': '模型字段验证错误'},
+                            'err_type': error_value.model.__name__ + ': 模型字段验证错误'},
                            ensure_ascii=False)
 
         send_response(self.session_handler.session,
