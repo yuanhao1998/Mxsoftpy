@@ -4,7 +4,7 @@
 # @Remark   : session处理类
 import typing as t
 import json
-from urllib.parse import unquote
+from urllib.parse import unquote_plus
 
 from .conf_base import ConfBase
 from .exception import CError, HTTPMethodError, DataError, AuthError
@@ -233,7 +233,7 @@ class Request(ConfBase):
             try:
                 data = parse_dict.get(
                     self.content_type.split(';')[0] if self.content_type else 'application/x-www-form-urlencoded')(
-                    post_data)
+                    unquote_plus(post_data))
             except TypeError:
                 raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
             self._POST = data
@@ -264,7 +264,7 @@ class Request(ConfBase):
         """
         解析x-www-form-urlencoded
         """
-        return {unquote(post.split('=')[0]): unquote(post.split('=')[1]) if len(post.split('=')) == 2 else ''
+        return {post.split('=')[0]: post.split('=')[1] if len(post.split('=')) == 2 else ''
                 for post in post_data.split('&')}
 
     @staticmethod
