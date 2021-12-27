@@ -4,14 +4,13 @@
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
 from typing import Union, Any, List, Type
 
-from mxsoftpy import Model
-
-from .globals import request
-from .db_def.def_type import type_map
-from .exception import DBError, DataError
 from superbsapi import *
 
+from mxsoftpy import Model
 from .db_def.db_error import BS_NOERROR
+from .db_def.def_type import type_map
+from .exception import DBError, DataError
+from .globals import request
 
 
 class BaseDB:
@@ -154,7 +153,7 @@ class BaseDB:
                     raise DataError('不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
 
         else:
-            raise DataError('错误的数据类型，items应为列表或字典')
+            raise DataError('生成符合数据库插入格式的数据时，传入错误的数据类型：%s，items应为items、dict或Model' % type(items).__name__)
 
         return data_list
 

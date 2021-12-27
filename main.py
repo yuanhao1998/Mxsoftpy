@@ -5,7 +5,6 @@
 import json
 import sys
 import typing as t
-from itertools import chain
 
 from pydantic import ValidationError
 
@@ -99,6 +98,7 @@ class Mx(BaseMx):
         :return:
         """
         self.session_handler = Request(session)
+        self.session_handler.url_map = self.url_map
 
         global session_handler
         session_handler = self.session_handler

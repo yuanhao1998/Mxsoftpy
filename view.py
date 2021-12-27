@@ -2,13 +2,13 @@
 # @Create   : 2021/5/17 9:46
 # @Author   : yh
 # @Remark   : session处理类
-import typing as t
 import json
+import typing as t
 from urllib.parse import unquote_plus
 
 from .conf_base import ConfBase
-from .exception import CError, HTTPMethodError, DataError, AuthError
 from .def_http_code import HttpCode, HttpType
+from .exception import CError, HTTPMethodError, DataError, AuthError
 
 
 class Request(ConfBase):
@@ -21,6 +21,7 @@ class Request(ConfBase):
         self.session = session  # session会话
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
+        self.url_map = None  # 所有的url
 
         self._request_headers_cls = None
         self._response_headers_cls = None
@@ -215,7 +216,7 @@ class Request(ConfBase):
             return self._GET
 
     @property
-    def POST(self) -> dict:
+    def POST(self) -> t.Any:
         """
         获取post方法传递的参数
         """
@@ -240,7 +241,7 @@ class Request(ConfBase):
             return self._POST
 
     @property
-    def PUT(self) -> dict:
+    def PUT(self) -> t.Any:
         """
         获取put方法传递参数
         """
