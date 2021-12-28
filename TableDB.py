@@ -8,11 +8,11 @@ from typing import Type, List, Any
 
 from superbsapi import CBSHandleLoc
 
+from . import Model
 from .BaseDB import BaseDB
 from .db_def.def_table import *
 from .db_def.def_type import type_map, type_c_python, type_c_str
 from .exception import DBError, DataError
-from . import Model
 
 symbol_map = {
     'e': TBDB_FMC_EQUAL,  # 等于
@@ -32,7 +32,7 @@ class TableDB(BaseDB):
         super().__init__(host, port)
         self.__table = None
 
-    def open(self, file: str, table: str = None, host: str = None, port: str = None):
+    def open(self, file: str, table: str = None, host: str = None, port: int = None):
         """
         打开table数据库
         :param file: 数据库名称
@@ -187,6 +187,15 @@ class TableDB(BaseDB):
 
         self.exec_tree('Tabledb_SelectRecordsByCTime', self.__table, count, start_time, end_time, res)
         return res
+    
+    def select_for_sql(self, sql: str) -> List[dict]:
+        """ 
+        根据sql查询数据
+        :param sql: 查询sql
+        """
+        res_list = []
+        self.exec_tree('Tabledb_Query', sql, res_list)
+        return res_list
 
     def filter(self, table_name: str = None, count: int = 0, **kwargs) -> List[dict]:
         """
