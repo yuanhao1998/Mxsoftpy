@@ -25,6 +25,18 @@ symbol_map = {
     # 其他的类型，以后用到了再添加
 }
 
+sql_symbol_map = {
+    'ne': '!=',  # 不等于
+    'gt': '>',  # 大于
+    'lt': '<',  # 小于
+    'gte': '>=',  # 大于等于
+    'lte': '<=',  # 小于等于
+    'like': 'like',  # 模糊匹配，使用 * 做为通配符
+    'in': 'in',  # 范围查找（枚举）
+    'between': 'between',  # 范围查找（范围）
+    # sql中支持limit,   # eq:limit a,b 从第a个开始，查询b条数据
+    # 其他的类型，数据库支持了再添加
+}
 
 class TableDB(BaseDB):
 
@@ -302,8 +314,8 @@ class TableDB(BaseDB):
             for key, value in kwargs.items():
                 try:
                     key, symbol = key.rsplit('__', 1)
-                    if symbol in symbol_map:
-                        symbol = symbol_map.get(symbol)
+                    if symbol in sql_symbol_map:
+                        symbol = sql_symbol_map.get(symbol)
                     else:
                         raise DataError('查询操作错误！正确操作包含：gt、lt等')
                 except ValueError:
