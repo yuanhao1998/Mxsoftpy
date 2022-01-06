@@ -16,7 +16,7 @@ from .view import Request, Response
 if t.TYPE_CHECKING:
     from .module import Module
 
-session_handler: Request   # session处理类
+session_handler: Request   # session处理类，用于globals文件中全局导入request
 
 
 class Mx(BaseMx):
@@ -150,6 +150,8 @@ class Mx(BaseMx):
         #
         # for func in funcs:
         #     func(self.session_handler)
+        from utils.middleware.before_request import cross_domain
+        cross_domain(self.session_handler)  # 全局跨域
 
         if func:
             try:

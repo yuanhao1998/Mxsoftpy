@@ -188,7 +188,7 @@ class TableDB(BaseDB):
         self.exec_tree('Tabledb_SelectRecordsByCTime', self.__table, count, start_time, end_time, res)
         return res
     
-    def select_for_sql(self, sql: str) -> List[dict]:
+    def exec_for_sql(self, sql: str) -> List[dict]:
         """ 
         根据sql查询数据
         :param sql: 查询sql

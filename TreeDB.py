@@ -411,7 +411,7 @@ class TreeDB(BaseDB):
             try:
                 key, symbol = key.rsplit('__', 1)
                 if symbol not in symbol_map:
-                    raise DataError('查询操作错误！正确操作包含：gt、lt等')
+                    raise DataError('查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), symbol))
             except ValueError:
                 symbol = 'e'
 
@@ -436,7 +436,7 @@ class TreeDB(BaseDB):
                 expression_list.append(expression_temp)
             elif symbol == 'between':
                 if not isinstance(value, list) or len(value) not in [2, 3]:
-                    raise DataError('查询格式错误！正确示例：a__between=[1, 3]，详情见TreeModel使用手册')
+                    raise DataError('查询格式错误！正确示例：a__between=[1, 3]')
                 temp['range_conditions'] = {'vLiData': value[0], 'vEnd': value[1]}
                 temp['value_type'] = value[2] if len(value) == 3 else type(value[0]).__name__
                 expression_list.append(' %s ' % i)
@@ -450,9 +450,9 @@ class TreeDB(BaseDB):
         default_query_conditions = list()
         for arg in args:
             if arg['symbol'] not in symbol_map:
-                raise DataError('查询操作错误！正确操作包含：gt、lt等，详情见TreeModel使用手册')
+                raise DataError('查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), arg['symbol']))
             if arg['value_type'] not in type_map:
-                raise DataError('查询数据类型！正确操作包含：str、int等，详情见TreeModel使用手册')
+                raise DataError('查询数据类型！正确操作包含：%s，您的数据类型：%s' % (str([i for i in type_map]), arg['value_type']))
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
             if arg.get('range_conditions'):
