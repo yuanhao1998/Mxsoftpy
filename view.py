@@ -265,7 +265,7 @@ class Request(ConfBase):
         """
         解析x-www-form-urlencoded
         """
-        return {k: v[0] for k, v in parse_qs(post_data).items()}
+        return {k: v[0] for k, v in parse_qs(post_data, keep_blank_values=True).items()}
 
     @staticmethod
     def _post_json(post_data: str) -> dict:
