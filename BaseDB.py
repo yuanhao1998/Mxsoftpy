@@ -29,6 +29,13 @@ class BaseDB:
         self.host, self.port = host, port
         self.__cls_value(self.host, self.port)
 
+    @property
+    def handle(self):
+        """
+        返回数据库操作句柄
+        """
+        return self.__chl.GetConfHandle()
+
     @staticmethod
     def return_value(res: tuple) -> Union[int, str, tuple, None]:
         """
@@ -196,22 +203,22 @@ class BaseDB:
         try:
             return request().company
         except Exception:
-            return 'base'
+            return 'Co_1'
 
     @staticmethod
     def _get_host_port2(key):
         # noinspection PyBroadException
+        # try:
+        #     from bsmiddle import DbServer_GetDataSource
+        #     host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
+        # except BaseException:
         try:
-            from bsmiddle import DbServer_GetDataSource
-            host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
-        except BaseException:
-            try:
-                from utils.conf.mxconfig import MxConfig
-                host = MxConfig.HOST
-                port = MxConfig.PORT
-            except (ModuleNotFoundError, ImportError, AttributeError):
-                host = '127.0.0.1'
-                port = 8123
+            from utils.conf.mxconfig import MxConfig
+            host = MxConfig.HOST
+            port = MxConfig.PORT
+        except (ModuleNotFoundError, ImportError, AttributeError):
+            host = '127.0.0.1'
+            port = 8123
         return host, port
 
     def _get_host_port(self, key: str) -> tuple:
