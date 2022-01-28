@@ -58,15 +58,13 @@ class Request(ConfBase):
         if self._company:
             return self._company
         else:
-            # from bsmiddle import GetSessionCompany
-            # flag, company = GetSessionCompany(self.session_id)
-            # if flag:
-            #     self._company = company
-            #     return self._company
-            # else:
-            #     raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
-            self._company = 'Co_1'
-            return self._company
+            from py_opm_wm_bm import GetSessionCompany
+            flag, company = GetSessionCompany(self.session_id)
+            if flag:
+                self._company = company
+                return self._company
+            else:
+                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
 
     @property
     def user(self):
@@ -76,15 +74,13 @@ class Request(ConfBase):
         if self._user:
             return self._user
         else:
-            # from bsmiddle import GetSessionUserId
-            # flag, user = GetSessionUserId(self.session_id)
-            # if flag:
-            #     self._user = user
-            #     return self._user
-            # else:
-            #     raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
-            self._user = 'user_1'
-            return self._user
+            from py_opm_wm_bm import GetSessionUserId
+            flag, user = GetSessionUserId(self.session_id)
+            if flag:
+                self._user = user
+                return self._user
+            else:
+                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
 
     @property
     def request_headers_cls(self):

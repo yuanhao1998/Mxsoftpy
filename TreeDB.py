@@ -251,7 +251,7 @@ class TreeDB(BaseDB):
         host, port = cls._check_conn_params(cls, host, port, file)
         return cls.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
-    def insert_sub_keys(self, sub_keys: Union[str, list], flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
+    def insert_sub_keys(self, sub_keys: Union[str, list] = '', flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
         """
         批量插入子键
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_sub_keys(['test1', 'test2'])
