@@ -33,7 +33,8 @@ class MQ(BaseDB):
         flag = flag or BSMQ_OT_COMMONMQ
 
         try:
-            self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
+            # self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
+            self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag)
         except (DBError, DataError):
             try:
                 self.exec('bs_mq_open', name, pwd, open_flag, flag, host, port)
