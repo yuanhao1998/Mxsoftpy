@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from .HTTPMethod import send_response
 from .base import BaseMx
-from .exception import NotFoundError, CError, MxBaseException
+from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
 
 if t.TYPE_CHECKING:
@@ -96,7 +96,7 @@ class Mx(BaseMx):
 
         if func:
             rv = func(self.session_handler)
-            return Response(*rv, type='default')
+            return rv if isinstance(rv, Response) else Response(*rv, type='default')
         else:
             raise NotFoundError(self.session_handler.url)
 
