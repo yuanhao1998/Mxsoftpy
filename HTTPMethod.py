@@ -30,25 +30,25 @@ def redirect(session, url: str, params: dict):
     session.SendData("")
 
 
-def send_response(session, data):
+def send_response(response):
     """
     返回响应数据
-    :param session: http会话
-    :param data: 要发送的数据
+    :param response: 响应实例
     """
-    if not session:
+
+    if not response.request.session:
         return WeMr.WE_MR_BADREQUEST
-    data_len = len(data)
-    if type(data) is not bytes:
-        data_bytes = bytes(data, encoding='utf-8')
+    data_len = len(response.data)
+    if type(response.data) is not bytes:
+        data_bytes = bytes(response.data, encoding='utf-8')
     else:
-        data_bytes = data
+        data_bytes = response.data
     if data_len > 1000:
-        session.GetHttpResponseHead().SetContentLength(len(data_bytes))
-        session.SendHeader()
-        session.SendData(data_bytes)
+        response.request.session.GetHttpResponseHead().SetContentLength(len(data_bytes))
+        response.request.session.SendHeader()
+        response.request.session.SendData(data_bytes)
     elif data_len > 0:
-        session.GetHttpResponseHead().SetContentLength(len(data_bytes))
-        session.SendHeader()
-        session.SendData(data)
+        response.request.session.GetHttpResponseHead().SetContentLength(len(data_bytes))
+        response.request.session.SendHeader()
+        response.request.session.SendData(response.data)
     return WeMr.WE_MR_OK

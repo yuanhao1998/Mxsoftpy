@@ -21,7 +21,7 @@ class Request(ConfBase):
         self.session = session  # session会话
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
-        self.url_map = None  # 所有的url
+        self.module_list = None  # 所有模块列表
 
         self._request_headers_cls = None
         self._response_headers_cls = None
@@ -343,14 +343,28 @@ class Response:
     响应类
     """
 
-    def __init__(self, msg: t.Any, *args, **kwargs):
-        self.msg = msg
+    def __init__(self, request: "Request", data, *args, **kwargs):
+        self.request = request
+        self.data = self.package_data(data, request.callback) if kwargs.get('type') == 'default' else data
 
-    def __str__(self):
-        return self.msg
+    @staticmethod
+    def package_data(data: t.Any, callback: str) -> json:
+        """
+        打包响应数据
+        :param data: 视图返回的数据
+        :param callback: 回调标识
+        :return: 打包后的数据
+        """
+        if isinstance(data, tuple):
+            data = json.dumps({'status': 'success', 'errmsg': data[0], 'data': data[1] if len(data) == 2 else data[1:]},
+                              ensure_ascii=False)
+        else:
+            data = json.dumps({'status': 'failed', 'errmsg': data, 'err_type': ''}, ensure_ascii=False)
 
-    def __call__(self, *args, **kwargs):
-        return self.msg
+        if callback:
+            data = '%s(%s)' % (callback, data)
+
+        return data
 
 
 class View(ConfBase):

@@ -16,7 +16,7 @@ from .view import Request, Response
 if t.TYPE_CHECKING:
     from .module import Module
 
-session_handler: Request   # session处理类，用于globals文件中全局导入request
+session_handler: Request  # session处理类，用于globals文件中全局导入request
 
 
 class Mx(BaseMx):
@@ -26,109 +26,122 @@ class Mx(BaseMx):
 
     def __init__(self, **options: t.Any):
         super().__init__(**options)
-        self.after_request_funcs = dict()
-        self.before_request_funcs = dict()
+
+        self.module_list = []  # 所有模块列表
+        self.after_request_funcs = list()
+        self.before_request_funcs = list()
 
     def before_request(self, f):
-        self.before_request_funcs.setdefault(None, []).append(f)
+        self.before_request_funcs.append(f)
         return f
 
     def after_request(self, f):
-        self.after_request_funcs.setdefault(None, []).append(f)
+        self.after_request_funcs.append(f)
         return f
-
-    @staticmethod
-    def set_response(request: "Request") -> "Request":
-        """
-        添加响应信息
-        """
-        try:
-            request.response_headers_cls.SetStatus(request.status_code)
-        except TypeError:
-            raise CError('session.GetHttpResponseHead().SetStatus()')
-        try:
-            request.response_headers_cls.SetContentType(request.response_content_type)
-        except TypeError:
-            raise CError('session.GetHttpResponseHead().SetContentType()')
-        return request
-
-    @staticmethod
-    def package_data(data: t.Any, callback: str) -> json:
-        """
-        打包响应数据
-        :param data: 视图返回的数据
-        :param callback: 回调标识
-        :return: 打包后的数据
-        """
-        if isinstance(data, tuple):
-            data = json.dumps({'status': 'success', 'errmsg': data[0], 'data': data[1] if len(data) == 2 else data[1:]},
-                              ensure_ascii=False)
-        else:
-            data = json.dumps({'status': 'failed', 'errmsg': data, 'err_type': ''}, ensure_ascii=False)
-
-        if callback:
-            data = '%s(%s)' % (callback, data)
-
-        return data
-
-    def response_handle(self, request: "Request", res: t.Any) -> tuple:
-        """
-        响应处理
-        :param res: 视图返回的数据
-        :param request: 请求类
-        :return:
-        """
-        request = self.set_response(request)
-        if isinstance(res, Response):
-            res = res()
-        else:
-            res = self.package_data(res, request.callback)
-        return request.session, res
 
     def register_module(self, module: "Module", **options: t.Any) -> None:
         """
         注册模块
         """
+        self.module_list.append(module)
         for k, v in module.url_map.items():
             self.url_map[k] = v
 
-    def get_func(self, session) -> t.Callable:
+    def full_dispatch_request(self, session):
+        """
+        处理请求
+        """
+        self.session_handler = Request(session)
+        self.session_handler.module_list = self.module_list
+
+        global session_handler
+        session_handler = self.session_handler
+
+        try:
+            rv = self.preprocess_request()
+            if rv is None:
+                rv = self.run_func()
+
+        except Exception as e:
+            rv = self.handle_user_exception(e)
+
+        response = self.process_response(rv)
+        send_response(response)
+
+    def preprocess_request(self):
+        """
+        处理before request列表
+        """
+        for before_func in self.before_request_funcs:
+            rv = before_func(self.session_handler)
+            if rv is not None:
+                return rv
+        return None
+
+    def process_response(self, response: Response) -> Response:
+        """
+        处理after request列表
+        :param response: 响应
+        """
+        for after_func in self.after_request_funcs:
+            response = after_func(response)
+
+        return response
+
+    def run_func(self) -> Response:
+        """
+        运行url对应的函数、异常处理
+        """
+        func = self.get_func()
+
+        if func:
+            rv = func(self.session_handler)
+            return Response(*rv, type='default')
+        else:
+            raise NotFoundError(self.session_handler.url)
+
+    def get_func(self) -> t.Callable:
         """
         从url_map获取对应的函数
         :return:
         """
-        self.session_handler = Request(session)
-        self.session_handler.url_map = self.url_map
 
-        global session_handler
-        session_handler = self.session_handler
-        
         url = self.session_handler.url
         if url is None:
             url = ''
         url = '/' + url if not url.startswith('/') else url
         return self.url_map.get(url)
 
-    def mx_base_exception_handler(self) -> None:
+    def handle_user_exception(self, e):
+        """
+        全局异常处理
+        :param e: 获取到到异常
+        """
+        if isinstance(e, MxBaseException):
+            return self.mx_base_exception_handler()
+        elif isinstance(e, ValidationError):
+            return self.validation_error_handler()
+        else:
+            raise e
+
+    def mx_base_exception_handler(self) -> Response:
         """
         对捕获到的MxBaseException进行处理
         """
         error_type, error_value, error_traceback = sys.exc_info()
-        self.session_handler = self.set_response(self.session_handler)
 
         error = error_type(error_value)
         self.session_handler.session.GetHttpResponseHead().SetStatus(error.state_code)
 
-        send_response(self.session_handler.session, '%s(%s)' % (
+        return Response(self.session_handler, '%s(%s)' % (
             self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
             error_value))
 
-    def validation_error_handler(self):
+    def validation_error_handler(self) -> Response:
         """
         对捕获到的ValidationError进行处理
         """
         error_type, error_value, error_traceback = sys.exc_info()
-        self.session_handler = self.set_response(self.session_handler)
 
         error = json.dumps({'status': 'failed',
                             'errmsg': str([{' -> '.join(str(e) for e in error['loc']): error['msg']}
@@ -136,38 +149,13 @@ class Mx(BaseMx):
                             'err_type': error_value.model.__name__ + ': 模型字段验证错误'},
                            ensure_ascii=False)
 
-        send_response(self.session_handler.session,
-                      '%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error)
-
-    def run_func(self, session) -> None:
-        """
-        运行url对应的函数、异常处理
-        """
-        func = self.get_func(session)
-
-        # funcs = self.before_request_funcs.get(None, ())
-        # funcs = chain(funcs, self.before_request_funcs[])
-        #
-        # for func in funcs:
-        #     func(self.session_handler)
-        from utils.middleware.before_request import cross_domain
-        cross_domain(self.session_handler)  # 全局跨域
-
-        if func:
-            try:
-                resp_cls, res = func(self.session_handler)
-                send_response(*self.response_handle(resp_cls, res))
-            except MxBaseException:
-                self.mx_base_exception_handler()
-            except ValidationError:
-                self.validation_error_handler()
-
-        else:
-            raise NotFoundError(self.url_map)
+        return Response(self.session_handler,
+                        '%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error)
 
     def __call__(self, session):
         """
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        self.run_func(session)
+
+        self.full_dispatch_request(session)
