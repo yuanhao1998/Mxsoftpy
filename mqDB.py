@@ -81,7 +81,7 @@ class MQ(BaseDB):
         :return: 取到的数据类
         """
         try:
-            res = self.exec_handle('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out, is_peek)
+            res = self.exec_handle('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out*1000, is_peek)
         except DBError as e:
             if e.err_code == 131:
                 res = (None, None, None, None, None)
