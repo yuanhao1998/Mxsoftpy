@@ -113,3 +113,13 @@ class MQ(BaseDB):
                 raise DBError(e.err_code, e.msg)
 
         return res
+    
+    def delete(self):
+        """
+        删除一个队列
+        """
+        try:
+            res = self.exec_handle('bs_mq_delete')
+        except DBError as e:
+            raise DBError(e.err_code, e.msg)
+
