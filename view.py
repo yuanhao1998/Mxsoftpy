@@ -44,12 +44,8 @@ class Request(ConfBase):
         """
         获取session id
         """
-        if self._session_id:
-            return self._session_id
-        else:
-            from mxsoft import CheckMxSession
-            self._session_id = CheckMxSession(self.session)
-            return self._session_id
+        from mxsoft import CheckMxSession
+        return CheckMxSession(self.session)
 
     @property
     def company(self):
