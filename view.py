@@ -8,7 +8,8 @@ from urllib.parse import parse_qs
 
 from .conf_base import ConfBase
 from .def_http_code import HttpCode, HttpType
-from .exception import CError, HTTPMethodError, DataError, AuthError
+from .exception import CError, HTTPMethodError, DataError
+from .globals import request
 
 
 class Request(ConfBase):
@@ -58,13 +59,14 @@ class Request(ConfBase):
         if self._company:
             return self._company
         else:
-            from py_opm_wm_bm import GetSessionCompany
-            flag, company = GetSessionCompany(self.session_id)
-            if flag:
-                self._company = company
-                return self._company
-            else:
-                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+            # from py_opm_wm_bm import GetSessionCompany
+            # flag, company = GetSessionCompany(self.session_id)
+            # if flag:
+            #     self._company = company
+            #     return self._company
+            # else:
+            #     raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+            return 'Co_1'
 
     @property
     def user(self):
@@ -74,13 +76,14 @@ class Request(ConfBase):
         if self._user:
             return self._user
         else:
-            from py_opm_wm_bm import GetSessionUserId
-            flag, user = GetSessionUserId(self.session_id)
-            if flag:
-                self._user = user
-                return self._user
-            else:
-                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+            # from py_opm_wm_bm import GetSessionUserId
+            # flag, user = GetSessionUserId(self.session_id)
+            # if flag:
+            #     self._user = user
+            #     return self._user
+            # else:
+            #     raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+            return 'user_1'
 
     @property
     def request_headers_cls(self):
@@ -343,9 +346,17 @@ class Response:
     响应类
     """
 
-    def __init__(self, request: "Request", data, *args, **kwargs):
-        self.request = request
-        self.data = self.package_data(data, request.callback) if kwargs.get('type') == 'default' else data
+    def __init__(self, data: t.Any, request_handle: Request = None, *args, **kwargs):
+        """
+        初始化响应类
+        :param data: 响应数据
+        :param request_handle: request实例
+        :param kwargs:
+                        type：响应类型
+                            args：default 默认响应，会调用package_data对data进行包装
+        """
+        self.request = request_handle if request_handle else request()
+        self.data = self.package_data(data, self.request.callback) if kwargs.get('type') == 'default' else data
 
     @staticmethod
     def package_data(data: t.Any, callback: str) -> json:
@@ -384,4 +395,4 @@ class View(ConfBase):
 
         if not meth:
             raise HTTPMethodError(self.request.request_type)
-        return self.request, meth()
+        return meth(), self.request

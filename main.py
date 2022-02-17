@@ -96,7 +96,7 @@ class Mx(BaseMx):
 
         if func:
             rv = func(self.session_handler)
-            return rv if isinstance(rv, Response) else Response(*rv, type='default')
+            return rv[0] if isinstance(rv[0], Response) else Response(*rv, type='default')
         else:
             raise NotFoundError(self.session_handler.url)
 
@@ -133,9 +133,9 @@ class Mx(BaseMx):
         error = error_type(error_value)
         self.session_handler.session.GetHttpResponseHead().SetStatus(error.state_code)
 
-        return Response(self.session_handler, '%s(%s)' % (
+        return Response('%s(%s)' % (
             self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
-            error_value))
+            error_value), self.session_handler)
 
     def validation_error_handler(self) -> Response:
         """
@@ -149,8 +149,8 @@ class Mx(BaseMx):
                             'err_type': error_value.model.__name__ + ': 模型字段验证错误'},
                            ensure_ascii=False)
 
-        return Response(self.session_handler,
-                        '%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error)
+        return Response('%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error,
+                        self.session_handler)
 
     def __call__(self, session):
         """
