@@ -365,43 +365,19 @@ class TreeDB(BaseDB):
         """
         return self.exec_tree('Treedb_RenameProperty', old_prop, new_prop)
 
-    def filter(self, **kwargs) -> tuple:
+    def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
         """
         根据属性筛选符合条件的子键（可分页显示）
 
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param is_desc: 是否反序
+        :param order_by: 排序字段
+        :param page_index: 第几页
+        :param page_size: 每页条数
         :param kwargs: 传入的查询条件
-                        page_size：每页条数
-                        page_index：第几页
-                        order_by：排序字段
-                        is_desc：是否反序
-                        default_expression：手动传入条件关系，默认关系为 and
         :return: 总条数，查询结果
         """
 
-        try:
-            page_size = kwargs.pop('page_size')
-            assert page_size, '未获取到数据！'
-        except (KeyError, AssertionError):
-            page_size = 0
-        try:
-            page_index = kwargs.pop('page_index')
-            assert page_index, '未获取到数据！'
-        except (KeyError, AssertionError):
-            page_index = 1
-        try:
-            order_by = kwargs.pop('order_by')
-            assert order_by, '未获取到数据！'
-        except (KeyError, AssertionError):
-            order_by = ''
-        try:
-            is_desc = kwargs.pop('is_desc')
-        except KeyError:
-            is_desc = False
-        try:
-            default_expression = kwargs.pop('default_expression')
-            assert default_expression, '未获取到数据！'
-        except (KeyError, AssertionError):
-            default_expression = None
         args, range_conditions = list(), dict()
 
         i = 0
