@@ -2,18 +2,31 @@
 # @Create   : 2021/9/13 9:12
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法
+import datetime
 import logging
 import re
-from typing import Type, List, Union
+from typing import Type, List, Any, Union
 
 from superbsapi import CBSHandleLoc
 
-from .BaseDB import BaseDB
-from .db_def.def_type import type_map
-from .exception import DBError, DataError
 from . import Model
+from .BaseDB import BaseDB
+from .db_def.def_table import *
+from .db_def.def_type import type_map, type_c_python, type_c_str
+from .exception import DBError, DataError
 
 symbol_map = {
+    'e': TBDB_FMC_EQUAL,  # 等于
+    'ne': TBDB_FMC_UNEQUAL,  # 不等于
+    'gt': TBDB_FMC_GREATERTHAN,  # 大于
+    'lt': TBDB_FMC_LESSTHAN,  # 小于
+    'gte': TBDB_FMC_EQUALORGREATERTHAN,  # 大于等于
+    'lte': TBDB_FMC_EQUALORLESSTHAN,  # 小于等于
+    'between': TBDB_FMC_GREATERTHAN
+    # 其他的类型，以后用到了再添加
+}
+
+sql_symbol_map = {
     'ne': '!=',  # 不等于
     'gt': '>',  # 大于
     'lt': '<',  # 小于
@@ -29,10 +42,15 @@ symbol_map = {
 
 class TableDB(BaseDB):
 
-    def open(self, file: str, host: str = None, port: str = None):
+    def __init__(self, host=None, port=None):
+        super().__init__(host, port)
+        self.__table = None
+
+    def open(self, file: str, table: str = None, host: str = None, port: int = None):
         """
         打开table数据库
         :param file: 数据库名称
+        :param table: 数据库表名
         :param host: 主机ip
         :param port: 端口
         """
@@ -43,13 +61,15 @@ class TableDB(BaseDB):
             self.exec_tree('Tabledb_ReopenDb', file)
         except DBError:
             try:
-                _host, _port = self._get_host_port(file)
+                _host, _port = self._get_host_port(table)
                 host, port = host or _host, port or _port
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host, file, port)
                 logging.warning('正在重新连接数据库并打开table[%s]' % file)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
+
+        self.__table = table
 
         return self
 
@@ -90,6 +110,64 @@ class TableDB(BaseDB):
                                "uDataLen": field.type_.max_length if hasattr(field.type_, 'max_length') else 200})
 
         self.exec_bs('bs_tabledb_create_table', table, field_list, flag)
+
+    @staticmethod
+    def __conversion_data(value: Any, value_type: int) -> Any:
+        """
+        校验数据类型是否合法并value到对应转换类型
+        """
+        if not type_c_str.get(value_type):
+            raise DataError('无法理解的C++数据类型：没有定义此类型：%s' % value_type)
+        if not type_c_python.get(value_type):
+            raise DataError('从C++数据类型转为Python类型时出错，没有定义转换关系：%s' % type_c_str[value_type])
+
+        try:
+            value = eval(type_c_python[value_type])(value)
+        except ValueError:
+            raise DataError('无法转换数据类型：将传入的数据类型%s转为C++类型%s（实际转为Python类型%s）' % (
+                type(value).__name__, type_c_str[value_type], type_c_python[value_type]))
+
+        return value
+
+    class __TimeDelta(object):
+        def __init__(self, **kwargs):
+            self._query = dict()
+            for k, v in kwargs.items():
+                if k in ['days', 'seconds', 'microseconds', 'milliseconds', 'minutes', 'hours', 'weeks'] and isinstance(
+                        v, (float, int)):
+                    self._query[k] = v
+
+        def res(self):
+            return self._query
+
+    def record_by_time(self, table_name: str = None, start_time: int = None, end_time: int = None, count=0,
+                       **kwargs) -> list:
+        """
+        根据时间获取记录
+        :param table_name: 要获取的表名
+        :param start_time: 开始时间戳
+        :param end_time: 结束时间戳
+        :param count: 要获取的条数，为0则获取所有
+        :param kwargs: 时间参数 ['days', 'seconds', 'microseconds', 'milliseconds', 'minutes', 'hours', 'weeks']
+        :return:
+        """
+        self.__table = table_name or self.__table
+        res = list()
+        if not self.__table:
+            raise DataError('找不到table，请打开或传入表')
+        if start_time is None and end_time is None:
+            now = datetime.datetime.now()
+            end_time = int(now.timestamp())
+            start_time = int((now - datetime.timedelta(**self.__TimeDelta(**kwargs).res())).timestamp())
+        elif start_time is not None and end_time is None:
+            end_time = int((datetime.datetime.fromtimestamp(start_time) + datetime.timedelta(
+                **self.__TimeDelta(**kwargs).res())).timestamp())
+        elif start_time is None and end_time is not None:
+            start_time = int((datetime.datetime.fromtimestamp(end_time) - datetime.timedelta(
+                **self.__TimeDelta(**kwargs).res())).timestamp())
+
+        self.exec_tree('Tabledb_SelectRecordsByCTime', self.__table, count, start_time, end_time, res)
+        return res
 
     def exec_for_sql(self, sql: str) -> List[dict]:
         """
@@ -138,15 +216,15 @@ class TableDB(BaseDB):
         """
         prop = ','.join([str(i) for i in prop_list]) if isinstance(prop_list, list) else prop_list or '*'
 
-        sql = f"select {prop} from {table}"
-        count_sql = f"select count(*) from {table}"
+        sql = f"select {prop} from {table or self.__table}"
+        count_sql = f"select count(*) from {table or self.__table}"
 
         query_list = list()
 
         for key, value in kwargs.items():
             try:
                 key, symbol = key.rsplit('__', 1)
-                assert symbol in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), symbol)
+                assert symbol in sql_symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in sql_symbol_map]), symbol)
             except ValueError:
                 symbol = '='
 
