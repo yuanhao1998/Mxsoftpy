@@ -125,7 +125,7 @@ class TableDB(BaseDB):
         return self.exec_for_sql(sql)
 
     def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
-               default_expression=None, count: int = None, **kwargs):
+               default_expression=None, count: int = None, **kwargs) -> tuple:
         """
         table表筛选
         :param prop_list: 筛选需查询的字段，不传查所有

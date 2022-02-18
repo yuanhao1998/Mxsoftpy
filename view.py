@@ -44,8 +44,9 @@ class Request(ConfBase):
         """
         获取session id
         """
-        from mxsoft import CheckMxSession
-        return CheckMxSession(self.session)
+        # from mxsoft import CheckMxSession
+        # return CheckMxSession(self.session)
+        return self.cookie.get('mxsessionid')
 
     @property
     def company(self):
@@ -79,7 +80,7 @@ class Request(ConfBase):
             #     return self._user
             # else:
             #     raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
-            return 'user_1'
+            return 'user_3'
 
     @property
     def request_headers_cls(self):
