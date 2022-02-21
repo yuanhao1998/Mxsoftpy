@@ -81,7 +81,7 @@ class MQ(BaseDB):
         :return: 取到的数据类
         """
         try:
-            res = self.exec_handle('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out*1000, is_peek)
+            res = self.exec_handle('bs_mq_pop', BS_TIMER_INFINITE if time_out == 999999 else time_out * 1000, is_peek)
         except DBError as e:
             if e.err_code == 131:
                 res = (None, None, None, None, None)
@@ -90,9 +90,9 @@ class MQ(BaseDB):
 
         class Data:
             def __init__(self, data: tuple):
-                self.data = data[1]
-                self.label = data[2]
-                self.time = data[3]
+                self.data = data[0]
+                self.label = data[1]
+                self.time = data[2]
 
             def __str__(self):
                 return str({'data': self.data, 'label': self.label, 'time': self.time})
@@ -113,7 +113,7 @@ class MQ(BaseDB):
                 raise DBError(e.err_code, e.msg)
 
         return res
-    
+
     def delete(self):
         """
         删除一个队列
@@ -122,4 +122,3 @@ class MQ(BaseDB):
             res = self.exec_handle('bs_mq_delete')
         except DBError as e:
             raise DBError(e.err_code, e.msg)
-
