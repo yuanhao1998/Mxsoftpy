@@ -202,7 +202,7 @@ class TableDB(BaseDB):
 
         return self.exec_for_sql(sql)
 
-    def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
+    def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1, is_desc=False,
                default_expression=None, count: int = None, **kwargs) -> tuple:
         """
         table表筛选
@@ -211,6 +211,7 @@ class TableDB(BaseDB):
         :param default_expression: 手动传入条件关系，默认关系为 and
         :param page_index: 第几页
         :param page_size: 每页条数
+        :param is_desc: 是否反序  <！！！ 注意：数据库暂时不支持，此次仅暂时预留 ！！！>
         :param count: 总条数
         :param kwargs: 传入的查询条件
         """
@@ -246,15 +247,15 @@ class TableDB(BaseDB):
             sql += ' where ' + ' '.join(expression_list)
             count_sql += ' where ' + ' '.join(expression_list)
         else:
-            sql += ' where ' + ' and '.join(query_list)
-            count_sql += ' where ' + ' and '.join(query_list)
+            sql += ' where ' + ' and '.join(query_list) if query_list else ''
+            count_sql += ' where ' + ' and '.join(query_list) if query_list else ''
 
         if count:
             sql += ' limit ' + ','.join([str(0), str(count)])
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
-        total = self.exec_for_sql(count_sql)[0]['count(*)']
         logging.debug('exec sql: %s' % sql)
+        total = self.exec_for_sql(count_sql)[0]['count(*)']
 
         return total, self.exec_for_sql(sql)
