@@ -235,9 +235,10 @@ class TableDB(BaseDB):
 
             elif symbol == 'between':
                 assert isinstance(value, list) and len(value) != 2, '查询格式错误！正确示例：a__between=[1, 3]'
-                value = ' and '.join([str(i) for i in value])
+                value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
-            query_list.append(f"{key} {symbol} {value}")
+            query_list.append(
+                "%s %s %s" % (key, symbol, value if type(value).__name__ != 'str' else '\'' + value + '\''))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
@@ -256,6 +257,7 @@ class TableDB(BaseDB):
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
         logging.debug('exec sql: %s' % sql)
+        print(sql)
         total = self.exec_for_sql(count_sql)[0]['count(*)']
 
         return total, self.exec_for_sql(sql)
