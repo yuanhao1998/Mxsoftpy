@@ -46,7 +46,7 @@ class TableDB(BaseDB):
         super().__init__(host, port)
         self.__table = None
 
-    def open(self, file: str, table: str = None, host: str = None, port: int = None):
+    def open(self, file: str = None, table: str = None, host: str = None, port: int = None):
         """
         打开table数据库
         :param file: 数据库名称
@@ -54,8 +54,8 @@ class TableDB(BaseDB):
         :param host: 主机ip
         :param port: 端口
         """
-        host = host or self.host
-        port = port or self.port
+
+        file = file or self._get_file()
 
         try:
             self.exec_tree('Tabledb_ReopenDb', file)
@@ -238,7 +238,7 @@ class TableDB(BaseDB):
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
             query_list.append(
-                "%s %s %s" % (key, symbol, value if type(value).__name__ != 'str' else '\'' + value + '\''))
+                "%s %s %s" % (key, sql_symbol_map[symbol], value if type(value).__name__ != 'str' else '\'' + value + '\''))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]

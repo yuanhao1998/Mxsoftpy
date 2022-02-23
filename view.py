@@ -142,7 +142,7 @@ class Request(ConfBase):
         else:
             cookie_dict = dict()
             try:
-                cookie_str = self.request_headers_cls.GetCookie()
+                cookie_str = self.headers.get('Cookie')
             except TypeError:
                 raise CError('session.GetHttpRequestHead().GetCookie()')
             cookie_list = cookie_str.split('; ')
