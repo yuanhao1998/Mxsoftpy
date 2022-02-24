@@ -128,7 +128,7 @@ class Request(ConfBase):
             for header in header_list:
                 header_class = header.split(': ')
                 if len(header_class) == 2:
-                    header_dict[header_class[0]] = header_class[1]
+                    header_dict[header_class[0].lower()] = header_class[1]
             self._headers = header_dict
             return self._headers
 
@@ -141,15 +141,11 @@ class Request(ConfBase):
             return self._cookie
         else:
             cookie_dict = dict()
-            try:
-                cookie_str = self.headers.get('Cookie')
-            except TypeError:
-                raise CError('session.GetHttpRequestHead().GetCookie()')
-            cookie_list = cookie_str.split('; ')
 
-            for cookie in cookie_list:
+            for cookie in self.headers.get('cookie').split('; '):
                 k, v = cookie.split('=')
                 cookie_dict[k] = v
+
             self._cookie = cookie_dict
             return self._cookie
 
@@ -311,7 +307,7 @@ class Request(ConfBase):
         if self._content_type:
             return self._content_type
         else:
-            self._content_type = self.headers.get('Content-Type') or self.headers.get('content-type')
+            self._content_type = self.headers.get('content-type')
             return self._content_type
 
     def add_header(self, header: str, value: str):
