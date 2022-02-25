@@ -27,6 +27,7 @@ symbol_map = {
 }
 
 sql_symbol_map = {
+    'e': '=',    # 等于
     'ne': '!=',  # 不等于
     'gt': '>',  # 大于
     'lt': '<',  # 小于
@@ -227,7 +228,7 @@ class TableDB(BaseDB):
                 key, symbol = key.rsplit('__', 1)
                 assert symbol in sql_symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in sql_symbol_map]), symbol)
             except ValueError:
-                symbol = '='
+                symbol = 'e'
 
             if symbol == 'in':
                 assert isinstance(value, tuple), '查询格式错误！正确示例：a__in=(1, 3, 4, 5)'

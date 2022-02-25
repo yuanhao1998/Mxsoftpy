@@ -14,7 +14,12 @@ def request():
 def config():
     """
     全局配置
-    @return: 
     """
-    from .main import _server_config
+    from .load import _server_config
     return _server_config
+
+
+def cache():
+    """
+    缓存配置
+    """

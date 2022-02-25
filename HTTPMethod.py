@@ -2,6 +2,8 @@
 # @Create   : 2021/5/26 9:47
 # @Author   : yh
 # @Remark   : http会话相关的公共方法
+from mxsoftpy.exception import CError
+
 from .def_http_code import HttpCode, WeMr
 
 
@@ -28,6 +30,21 @@ def redirect(session, url: str, params: dict):
     headers.SetContentLength(0)
     session.SendHeader()
     session.SendData("")
+
+
+def add_response(response):
+    """
+    添加响应信息
+    """
+    try:
+        response.request.response_headers_cls.SetStatus(response.request.status_code)
+    except TypeError:
+        raise CError('session.GetHttpResponseHead().SetStatus()')
+    try:
+        response.request.response_headers_cls.SetContentType(response.request.response_content_type)
+    except TypeError:
+        raise CError('session.GetHttpResponseHead().SetContentType()')
+    return response
 
 
 def send_response(response):

@@ -6,13 +6,12 @@ import json
 import typing as t
 from urllib.parse import parse_qs
 
-from .conf_base import ConfBase
 from .def_http_code import HttpCode, HttpType
-from .exception import CError, HTTPMethodError, DataError
+from .exception import CError, HTTPMethodError, DataError, AuthError
 from .globals import request
 
 
-class Request(ConfBase):
+class Request:
     """
     session处理基类
     """
@@ -80,7 +79,7 @@ class Request(ConfBase):
             #     return self._user
             # else:
             #     raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
-            return 'user_3'
+            return 'user_1'
 
     @property
     def request_headers_cls(self):
@@ -143,7 +142,10 @@ class Request(ConfBase):
             cookie_dict = dict()
 
             for cookie in self.headers.get('cookie').split('; '):
-                k, v = cookie.split('=')
+                try:
+                    k, v = cookie.split('=')
+                except ValueError:
+                    raise AuthError('没有cookie')
                 cookie_dict[k] = v
 
             self._cookie = cookie_dict
@@ -371,7 +373,7 @@ class Response:
         return data
 
 
-class View(ConfBase):
+class View:
     def __init__(self, request: "Request", *args, **kwargs):
         super().__init__()
         self.request = request
