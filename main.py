@@ -176,7 +176,7 @@ class Mx(BaseMx):
                         conf.read(config, encoding='gb2312')
                 conf_name = basename(config).split(".")[0]
                 if hasattr(self, conf_name):
-                    conf_name + "_1"
+                    conf_name = conf_name + "_1"
                 self.__setattr__(conf_name, self.__new_cls(conf_name, conf))
 
         def __new_cls(self, conf_name, conf):
