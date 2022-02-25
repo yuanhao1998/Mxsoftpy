@@ -9,3 +9,12 @@ def request():
     """
     from .main import session_handler
     return session_handler
+
+
+def config():
+    """
+    全局配置
+    @return: 
+    """
+    from .main import _server_config
+    return _server_config

@@ -17,6 +17,7 @@ if t.TYPE_CHECKING:
     from .module import Module
 
 session_handler: Request  # session处理类，用于globals文件中全局导入request
+_server_config: object  # 全集配置
 
 
 class Mx(BaseMx):
@@ -151,6 +152,47 @@ class Mx(BaseMx):
 
         return Response('%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error,
                         self.session_handler)
+
+    class __ServerConfig:
+        """
+        读取配置
+        """
+
+        def __init__(self, config_path):
+            from configparser import ConfigParser
+            from os.path import basename, isfile
+            for config in config_path:
+                print(config)
+
+                if not isfile(config):
+                    continue
+                conf = ConfigParser()
+                try:
+                    conf.read(config, encoding='gbk')
+                except UnicodeDecodeError:
+                    try:
+                        conf.read(config, encoding='utf-8')
+                    except UnicodeDecodeError:
+                        conf.read(config, encoding='gb2312')
+                conf_name = basename(config).split(".")[0]
+                if hasattr(self, conf_name):
+                    conf_name + "_1"
+                self.__setattr__(conf_name, self.__new_cls(conf_name, conf))
+
+        def __new_cls(self, conf_name, conf):
+            type_attr = {}
+            for k, v in conf.items():
+
+                if not isinstance(v, str):
+                    v = self.__new_cls(k, v)
+                type_attr[k] = v
+
+            return type(conf_name, (), type_attr)
+
+    def server_config(self, config_path: list):
+        global _server_config
+
+        _server_config = self.__ServerConfig(config_path)
 
     def __call__(self, session):
         """
