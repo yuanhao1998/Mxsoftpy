@@ -351,7 +351,14 @@ class Response:
                             args：default 默认响应，会调用package_data对data进行包装
         """
         self.request = request_handle if request_handle else request()
-        self.data = self.package_data(data, self.request.callback) if kwargs.get('type') == 'default' else data
+        if kwargs.get('type') == 'default':
+            self.data = self.package_data(data, self.request.callback)
+        else:
+            try:
+                json.loads(data)
+                self.data = data
+            except Exception:
+                self.data = json.dumps(data)
 
     @staticmethod
     def package_data(data: t.Any, callback: str) -> json:

@@ -19,7 +19,10 @@ def config():
     return _server_config
 
 
-def cache():
+def redis_pool():
     """
     缓存配置
     """
+    from .load import _redis_conn_pool
+
+    return _redis_conn_pool

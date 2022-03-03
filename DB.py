@@ -5,6 +5,7 @@
 from .mqDB import MQ
 from .TableDB import TableDB
 from .TreeDB import TreeDB
+from .CacheDB import RedisDB
 
 
 class DB:
@@ -13,3 +14,4 @@ class DB:
         self.tree = TreeDB()
         self.table = TableDB()
         self.mq = MQ()
+        self.redis = RedisDB()

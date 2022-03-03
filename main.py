@@ -32,7 +32,7 @@ class Mx(BaseMx):
         self.before_request_funcs = list()  # 请求钩子
 
         from .load import load
-        load()
+        load()  # 初始化
 
     def before_request(self, f):
         self.before_request_funcs.append(f)
