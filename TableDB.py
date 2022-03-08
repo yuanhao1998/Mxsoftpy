@@ -259,6 +259,14 @@ class TableDB(BaseDB):
 
         logging.debug('exec sql: %s' % sql)
         print(sql)
-        total = self.exec_for_sql(count_sql)[0]['count(*)']
 
-        return min(count, total) if count else total, self.exec_for_sql(sql)
+        try:
+            total = self.exec_for_sql(count_sql)[0]['count(*)']
+            data = self.exec_for_sql(sql)
+        except DBError as e:
+            if e.err_code == 288:  # 错误码288意思是表为空，不应该报错
+                total, data = 0, []
+            else:
+                raise e
+
+        return min(count, total) if count else total, data
