@@ -261,4 +261,4 @@ class TableDB(BaseDB):
         print(sql)
         total = self.exec_for_sql(count_sql)[0]['count(*)']
 
-        return count or total, self.exec_for_sql(sql)
+        return min(count, total), self.exec_for_sql(sql)
