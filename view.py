@@ -358,7 +358,7 @@ class Response:
                 json.loads(data)
                 self.data = data
             except Exception:
-                self.data = json.dumps(data)
+                self.data = json.dumps(data, ensure_ascii=False)
 
     @staticmethod
     def package_data(data: t.Any, callback: str) -> json:
