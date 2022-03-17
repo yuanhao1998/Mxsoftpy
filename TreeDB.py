@@ -386,19 +386,16 @@ class TreeDB(BaseDB):
         for key, value in kwargs.items():
             try:
                 key, symbol = key.rsplit('__', 1)
-                if symbol not in symbol_map:
-                    raise DataError('查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), symbol))
+                assert symbol in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), symbol)
             except ValueError:
                 symbol = 'e'
 
             temp = {'key': key, 'value_type': type(value).__name__, 'symbol': symbol, 'value': value}
 
             if symbol == 'in':
+                assert isinstance(value, list), '查询格式错误！正确示例：a__in=[1, 3, 4, 5]'
+                assert len(value) != 0, '使用in时列表不能为空'
                 j = 0
-                if not isinstance(value, list):
-                    raise DataError('查询格式错误！正确示例：a__in=[1, 3, 4, 5]')
-                if len(value) == 0:
-                    raise DataError('使用in时列表不能为空')
                 for v in value:
                     temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'e', 'value': v}
                     args.append(temp)
@@ -411,13 +408,33 @@ class TreeDB(BaseDB):
                 expression_temp += ')'
                 expression_list.append(expression_temp)
             elif symbol == 'between':
-                if not isinstance(value, list) or len(value) not in [2, 3]:
-                    raise DataError('查询格式错误！正确示例：a__between=[1, 3]')
+                assert isinstance(value, list) and len(value) in [2, 3], '查询格式错误！正确示例：a__between=[1, 3]'
                 temp['range_conditions'] = {'vLiData': value[0], 'vEnd': value[1]}
                 temp['value_type'] = value[2] if len(value) == 3 else type(value[0]).__name__
                 expression_list.append(' %s ' % i)
                 args.append(temp)
                 i += 1
+            elif symbol == 'like':
+                if isinstance(value, str):
+                    expression_list.append(' %s ' % i)
+                    args.append(temp)
+                    i += 1
+                elif isinstance(value, list):
+                    assert len(value) != 0, '使用列表时不能为空列表'
+                    j = 0
+                    for v in value:
+                        temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'like', 'value': v}
+                        args.append(temp)
+                        if j == 0:
+                            expression_temp = '(%s' % i
+                        else:
+                            expression_temp += ' or ' + str(i)
+                        i += 1
+                        j += 1
+                    expression_temp += ')'
+                    expression_list.append(expression_temp)
+                else:
+                    raise AssertionError('未知操作')
             else:
                 expression_list.append(' %s ' % i)
                 args.append(temp)
@@ -425,10 +442,8 @@ class TreeDB(BaseDB):
 
         default_query_conditions = list()
         for arg in args:
-            if arg['symbol'] not in symbol_map:
-                raise DataError('查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), arg['symbol']))
-            if arg['value_type'] not in type_map:
-                raise DataError('查询数据类型！正确操作包含：%s，您的数据类型：%s' % (str([i for i in type_map]), arg['value_type']))
+            assert arg['symbol'] in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), arg['symbol'])
+            assert arg['value_type'] in type_map, '查询数据类型！正确操作包含：%s，您的数据类型：%s' % (str([i for i in type_map]), arg['value_type'])
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
             if arg.get('range_conditions'):
