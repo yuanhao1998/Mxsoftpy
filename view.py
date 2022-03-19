@@ -58,10 +58,10 @@ class Request:
             from py_opm_wm_bm import GetSessionCompany
             flag, company = GetSessionCompany(self.session_id)
             if flag:
+                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+            else:
                 self._company = company
                 return self._company
-            else:
-                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
 
     @property
     def user(self):
@@ -74,10 +74,10 @@ class Request:
             from py_opm_wm_bm import GetSessionUserId
             flag, user = GetSessionUserId(self.session_id)
             if flag:
+                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+            else:
                 self._user = user
                 return self._user
-            else:
-                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
 
     @property
     def request_headers_cls(self):
