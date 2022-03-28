@@ -22,7 +22,10 @@ class RedisDB(redis.Redis):
         return self.__conn
 
     def __getattribute__(self, name: str):
-        try:
-            return self.__conn.__getattribute__(name)
-        except Exception:
+        if name.startswith("_"):
             return redis.Redis.__getattribute__(self, name)
+        else:
+            try:
+                return self.__conn.__getattribute__(name)
+            except Exception:
+                return redis.Redis.__getattribute__(self, name)
