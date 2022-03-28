@@ -27,5 +27,5 @@ class RedisDB(redis.Redis):
         else:
             try:
                 return self.__conn.__getattribute__(name)
-            except Exception:
+            except BaseException:
                 return redis.Redis.__getattribute__(self, name)
