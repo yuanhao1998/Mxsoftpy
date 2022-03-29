@@ -23,9 +23,9 @@ class RedisDB(redis.Redis):
 
     def __getattribute__(self, name: str):
         if name.startswith("_"):
-            return redis.Redis.__getattribute__(self, name)
+            return super().__getattribute__(name)
         else:
             try:
                 return self.__conn.__getattribute__(name)
             except BaseException:
-                return redis.Redis.__getattribute__(self, name)
+                return super().__getattribute__(name)
