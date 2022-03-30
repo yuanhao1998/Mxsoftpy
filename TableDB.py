@@ -170,6 +170,15 @@ class TableDB(BaseDB):
         self.exec_tree('Tabledb_SelectRecordsByCTime', self.__table, count, start_time, end_time, res)
         return res
 
+    def last_data(self, table_name: str = None) -> dict:
+        """
+        获取最新的一条数据
+        """
+        self.__table = table_name or self.__table
+        res1, res2 = dict(), dict()
+        self.exec_bs('bs_tabledb_get_dyn_and_lastrd', self.__table, res1, res2)
+        return res2
+
     def exec_for_sql(self, sql: str) -> List[dict]:
         """
         根据sql查询数据
