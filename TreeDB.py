@@ -2,9 +2,9 @@
 # @Author : yh
 # @Time : 2020/11/5 16:18
 # @Remark: 存放Tree db数据库的操作方法，详情见TreeModel使用手册
-import logging
 from typing import List, Any, Union
 
+from mxsoftpy import Model
 from superbsapi import CBSHandleLoc
 
 from .BaseDB import BaseDB
@@ -103,7 +103,6 @@ class TreeDB(BaseDB):
                     host, port = host or _host, port or _port
                     self.__chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
-                    logging.debug('正在重新连接数据库并打开主键[%s]-子键[%s], 数据库[%s], host[%s]' % (main_key, sub_key, file, host))
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
                 except DBError as e:
                     raise DBError(e.err_code, '打开主键[%s]-子键[%s]时' % (main_key, sub_key))
@@ -119,7 +118,6 @@ class TreeDB(BaseDB):
                         host, port = host or _host, port or _port
                         self.__chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
-                        logging.debug('正在重新连接tree数据库并打开主键[%s], 数据库[%s], host[%s]' % (main_key, file, host))
                     except DBError as e:
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         return self
@@ -282,7 +280,7 @@ class TreeDB(BaseDB):
             raise DataError('未知的value_type, 类型：%s ,值：%s' % (str(type(value)), value))
         return self.exec_bs('bs_treedb_insert_property', prop, value, value_type, overwrite)
 
-    def insert_items(self, items: Union[List[tuple], dict], overwrite=True) -> int:
+    def insert_items(self, items: Union[List[tuple], dict, Model], overwrite=True) -> int:
         """
         批量插入数据
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_items([('mxlabel', 'test'), ('mxid', 123)])

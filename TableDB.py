@@ -3,7 +3,6 @@
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法
 import datetime
-import logging
 import re
 from typing import Type, List, Any, Union
 
@@ -11,20 +10,8 @@ from superbsapi import CBSHandleLoc
 
 from . import Model
 from .BaseDB import BaseDB
-from .db_def.def_table import *
 from .db_def.def_type import type_map, type_c_python, type_c_str
 from .exception import DBError, DataError
-
-symbol_map = {
-    'e': TBDB_FMC_EQUAL,  # 等于
-    'ne': TBDB_FMC_UNEQUAL,  # 不等于
-    'gt': TBDB_FMC_GREATERTHAN,  # 大于
-    'lt': TBDB_FMC_LESSTHAN,  # 小于
-    'gte': TBDB_FMC_EQUALORGREATERTHAN,  # 大于等于
-    'lte': TBDB_FMC_EQUALORLESSTHAN,  # 小于等于
-    'between': TBDB_FMC_GREATERTHAN
-    # 其他的类型，以后用到了再添加
-}
 
 sql_symbol_map = {
     'e': '=',    # 等于
@@ -66,7 +53,6 @@ class TableDB(BaseDB):
                 host, port = host or _host, port or _port
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host, file, port)
-                logging.warning('正在重新连接数据库并打开table[%s]' % file)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 
@@ -266,9 +252,6 @@ class TableDB(BaseDB):
             sql += ' limit ' + ','.join([str(0), str(count)])
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
-
-        logging.debug('exec sql: %s' % sql)
-        print(sql)
 
         try:
             total = self.exec_for_sql(count_sql)[0]['count(*)']

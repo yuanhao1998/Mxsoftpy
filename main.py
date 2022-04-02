@@ -7,7 +7,7 @@ import sys
 import typing as t
 
 from pydantic import ValidationError
-# from viztracer import VizTracer
+from viztracer import VizTracer
 
 from .HTTPMethod import send_response, add_response
 from .base import BaseMx
@@ -60,8 +60,8 @@ class Mx(BaseMx):
 
         global session_handler
         session_handler = self.session_handler
-        # a = VizTracer()
-        # a.start()
+        a = VizTracer(log_func_args=True, log_func_retval=True, max_stack_depth=10)
+        a.start()
         try:
             rv = self.preprocess_request()
             if rv is None:
@@ -69,8 +69,8 @@ class Mx(BaseMx):
 
         except Exception as e:
             rv = self.handle_user_exception(e)
-        # a.stop()
-        # a.save(r'\\Mac\Home\Desktop\result.json')
+        a.stop()
+        a.save(r'\\Mac\Home\Desktop\result.json')
 
         response = self.process_response(rv)
         send_response(add_response(response))
