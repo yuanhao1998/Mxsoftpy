@@ -240,7 +240,8 @@ class TableDB(BaseDB):
                 symbol = 'e'
 
             if symbol == 'in':
-                assert isinstance(value, tuple), '查询格式错误！正确示例：a__in=(1, 3, 4, 5)'
+                assert isinstance(tuple(value) if isinstance(value, list) else value, tuple), \
+                    '查询格式错误！正确示例：a__in=(1, 3, 4, 5)'
                 assert len(value) != 0, '使用in时元组不能为空'
 
             elif symbol == 'between':
