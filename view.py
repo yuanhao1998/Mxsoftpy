@@ -334,6 +334,199 @@ class Request:
         raise CError("读取上传文件错误")
 
 
+class WSGIRequest:
+    """
+    解析来来自WSGI Server的请求参数
+    """
+    def __init__(self, environ: dict):
+        self.environ = environ
+        self.status_code = HttpCode.st_200_ok  # 默认的响应码
+        self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
+        self.module_list = None  # 所有模块列表
+
+        self.url = self.environ.get('REQUEST_URI', '')
+        self.peer_ip = self.environ.get('REMOTE_ADDR', '')
+        self.request_type = self.environ.get('REQUEST_METHOD', 'GET')
+        self._content_type = self.environ.get('CONTENT_TYPE', '')
+        self._headers = None
+        self._cookie = None
+        self._GET = None
+        self._POST = None
+        self._web_path = None
+
+        self._session_id = None
+        self._company = None
+        self._user = None
+
+    @property
+    def session_id(self):
+        """
+        获取session id
+        """
+        return self.cookie.get('mxsessionid')
+
+    @property
+    def company(self):
+        """
+        获取公司
+        """
+        if self._company:
+            return self._company
+        else:
+            from py_opm_wm_bm import GetSessionCompany
+            flag, company = GetSessionCompany(self.session_id)
+            if flag == 0 or flag is True:
+                self._company = company
+                return self._company
+            else:
+                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+
+    @property
+    def user(self):
+        """
+        获取用户
+        """
+        if self._user:
+            return self._user
+        else:
+            from py_opm_wm_bm import GetSessionUserId
+            flag, user = GetSessionUserId(self.session_id)
+            if flag == 0 or flag is True:
+                self._user = user
+                return self._user
+            else:
+                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+
+    @property
+    def headers(self) -> dict:
+        """
+        获取并返回所有请求头
+        """
+        if self._headers:
+            return self._headers
+        else:
+            self._headers = {}
+            for k, v in self.environ.items():
+                if k.startswith('HTTP_'):
+                    self._headers[k[5:].lower()] = v
+            return self._headers
+
+    @property
+    def cookie(self) -> dict:
+        """
+        获取请求cookie
+        """
+        if self._cookie:
+            return self._cookie
+        else:
+            cookie_dict = dict()
+
+            for cookie in self.environ.get('HTTP_COOKIE').split('; '):
+                try:
+                    k, v = cookie.split('=')
+                except ValueError:
+                    raise AuthError('没有cookie')
+                cookie_dict[k] = v
+
+            self._cookie = cookie_dict
+            return self._cookie
+
+    @property
+    def callback(self) -> str:
+        """
+        返回回调标志
+        """
+        return self.GET.get('callbackparam') or ""
+
+    @property
+    def GET(self) -> dict:
+        """
+        获取get方法传递的参数
+        """
+        if self._GET:
+            return self._GET
+        else:
+            query = self.environ.get('QUERY_STRING', '')
+            self._GET = {k: v for k, v in parse_qs(query).items()}
+            return self._GET
+
+    @property
+    def POST(self) -> t.Any:
+        """
+        获取post方法传递的参数
+        """
+        if self._POST:
+            return self._POST
+        else:
+            parse_dict = {
+                'application/x-www-form-urlencoded': self._post_x_www_form_urlencoded,
+                'application/json': self._post_json
+            }
+            post_length = self.environ.get('CONTENT_LENGTH')
+            post_data = self.environ.get('wsgi.input').read(int(post_length)).decode('utf-8')
+            try:
+                data = parse_dict.get(
+                    self.content_type.split(';')[0] if self.content_type else 'application/x-www-form-urlencoded')(
+                    post_data)
+            except TypeError:
+                raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
+            self._POST = data
+            return self._POST
+
+    @property
+    def PUT(self) -> t.Any:
+        """
+        获取put方法传递参数
+        """
+        return self.POST
+
+    @property
+    def DELETE(self) -> dict:
+        """
+        获取delete方法传递的参数
+        """
+        return self.GET
+
+    def _post_form_data(self):
+        """
+        解析form-data
+        """
+        # TODO 未来再支持form_data
+
+    @staticmethod
+    def _post_x_www_form_urlencoded(post_data: str) -> dict:
+        """
+        解析x-www-form-urlencoded
+        """
+        return {k: v[0] for k, v in parse_qs(post_data, keep_blank_values=True).items()}
+
+    @staticmethod
+    def _post_json(post_data: str) -> dict:
+        """
+        解析json
+        """
+        return json.loads(post_data)
+
+    @property
+    def content_type(self):
+        """
+        获取请求content_type
+        """
+        if self._content_type:
+            return self._content_type
+        else:
+            self._content_type = self.headers.get('content-type')
+            return self._content_type
+
+    def add_header(self, header: str, value: str):
+        """
+        添加响应头
+        :param header: 要添加的响应头
+        :param value: 响应头的值
+        """
+        self.headers[header] = value
+
+
 class Response:
     """
     响应类

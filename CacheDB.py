@@ -4,9 +4,12 @@
 from typing import Union, List, Any
 
 import redis
+from superbsapi import *
 from mxsoftpy import Model
+from mxsoftpy.db_def.db_error import BS_NOERROR
 from mxsoftpy.db_def.def_type import type_map
 from mxsoftpy.BaseDB import BaseDB
+from mxsoftpy.exception import DBError
 from mxsoftpy.globals import redis_pool
 
 
@@ -37,6 +40,38 @@ class RedisDB(redis.Redis):
 
 class CacheDB(BaseDB):
 
+    def return_value(self, res: tuple) -> Union[int, str, tuple, None]:
+        """
+        用于直接返回结果集的函数，处理其返回值
+
+        :param res: 错误信息及函数返回的数据
+        :return: 返回信息
+        """
+
+        if isinstance(res, tuple):
+            if len(res) == 2:
+                res, self._handle = res
+                data = None
+            elif len(res) == 3:
+                res, self._handle, data = res
+            else:
+                res, self._handle, data = res[0], res[1], res[2:]
+        else:
+            data = None
+
+        if res != BS_NOERROR:
+            raise DBError(res)
+
+        return data
+
+    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
+        """
+        执行bs函数
+        """
+
+        res = eval(operate)(self._handle, *args, **kwargs)
+        return self.return_value(res)
+
     def insert_file(self, file_name: str, config_name: str = 'memdb.ini', host: str = None, port: int = None) -> int:
         """
         插入数据库
@@ -48,28 +83,32 @@ class CacheDB(BaseDB):
         :param port: 端口
         """
 
-        host, port = self._get_host_port2(file_name)
-        return self.exec2('bs_memdb_create_newfile', file_name, config_name, host, port)
+        _host, _port = self._get_host_port(file_name)
+        return self.exec2('bs_memdb_create_newfile', file_name, config_name, host or _host, port or _port)
 
     def open(self, file: str = None, host: str = None, port: int = None) -> "CacheDB":
+        """
+        打开数据库
+        """
 
-        # file = 'Cache_' + (file or self._get_file())
-        # _host, _port = self._get_host_port(file)
-        # host, port = host or _host, port or _port
-        self.exec_bs('bs_memdb_open', file, host, port)
+        _host, _port = self._get_host_port(file)
+        file = 'Cache_' + (file or self._get_file())
+        self.exec('bs_memdb_open', file, host or _host, port or _port)
         return self
 
-    def set(self, key: str, value: str, expire: int = -1, create=False, update=False) -> int:
+    def set(self, key: str, value: str, value_type=None, expire: int = -1, create=False, update=False) -> int:
         """
         设置一个String缓存
 
         :param key: key
         :param value: value
+        :param value_type: value类型
         :param expire: 过期时间 -1 为永不失效
         :param create: 如果设置为True,则只有name不存在时,当前set操作才执行(新建)
         :param update: 如果设置为True，则只有name存在时，当前set操作才执行（修改）
         """
-        return self.exec_bs('bs_memdb_set', key, value, expire, create, update)
+        value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
+        return self.exec_bs('bs_memdb_set', key, value, value_type, expire, create, update)
 
     def get(self, key: str) -> str:
         """
@@ -154,7 +193,7 @@ class CacheDB(BaseDB):
         :param key: key
         """
         return self.exec_bs('bs_memdb_delete_hkey', name, key)
-    
+
     def hmdel_key(self, name: str, keys: List[str]) -> int:
         """
         批量删除Hash缓存的key
@@ -163,7 +202,7 @@ class CacheDB(BaseDB):
         :param keys: key
         """
         return self.exec_bs('bs_memdb_delete_hmkey', name, keys)
-    
+
     def hdel(self, name: str) -> int:
         """
         删除一个Hash

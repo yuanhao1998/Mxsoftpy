@@ -11,8 +11,9 @@ from pydantic import ValidationError
 
 from .HTTPMethod import send_response, add_response
 from .base import BaseMx
+from .def_http_code import hop_by_hop
 from .exception import NotFoundError, MxBaseException
-from .view import Request, Response
+from .view import Request, Response, WSGIRequest
 
 if t.TYPE_CHECKING:
     from .module import Module
@@ -29,7 +30,7 @@ class Mx(BaseMx):
         super().__init__(**options)
 
         self.module_list = []  # 所有模块列表
-        self.after_request_funcs = list()   # 响应钩子
+        self.after_request_funcs = list()  # 响应钩子
         self.before_request_funcs = list()  # 请求钩子
 
         from .load import load
@@ -74,6 +75,30 @@ class Mx(BaseMx):
 
         response = self.process_response(rv)
         send_response(add_response(response))
+
+    def full_dispatch_wsgi_request(self, environ, start_response):
+        """
+        处理wsgi服务器的请求
+        :param environ: 请求信息
+        :param start_response: 响应函数
+        """
+        self.session_handler = WSGIRequest(environ)
+
+        global session_handler
+        session_handler = self.session_handler
+
+        try:
+            rv = self.preprocess_request()
+            if rv is None:
+                rv = self.run_func()
+
+        except Exception as e:
+            rv = self.handle_wsgi_user_exception(e)
+
+        response = self.process_response(rv)
+        start_response(str(response.request.status_code),
+                       [(k, v) for k, v in response.request.headers.items() if k not in hop_by_hop])
+        return [bytes(response.data, encoding='utf-8')]
 
     def preprocess_request(self):
         """
@@ -144,6 +169,19 @@ class Mx(BaseMx):
             self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
             error_value), self.session_handler)
 
+    def wsgi_mx_base_exception_handler(self) -> Response:
+        """
+        对捕获到的MxBaseException进行处理、适用于wsgi模式
+        """
+        error_type, error_value, error_traceback = sys.exc_info()
+
+        error = error_type(error_value)
+        self.session_handler.status_code = error.state_code
+
+        return Response('%s(%s)' % (
+            self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
+            error_value), self.session_handler)
+
     def validation_error_handler(self) -> Response:
         """
         对捕获到的ValidationError进行处理
@@ -159,10 +197,24 @@ class Mx(BaseMx):
         return Response('%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error,
                         self.session_handler)
 
-    def __call__(self, session):
+    def handle_wsgi_user_exception(self, e):
+        """
+        处理wsgi的异常
+        :param e:
+        :return:
+        """
+        if isinstance(e, MxBaseException):
+            return self.wsgi_mx_base_exception_handler()
+        elif isinstance(e, ValidationError):
+            return self.validation_error_handler()
+        else:
+            raise e
+
+    def __call__(self, environ=None, start_response=None, session=None):
         """
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-
+        if environ and start_response:
+            return self.full_dispatch_wsgi_request(environ, start_response)
         self.full_dispatch_request(session)

@@ -75,3 +75,17 @@ class HttpType:
         6: 'DELETE',
         7: 'TRACE'
     }
+
+
+hop_by_hop = frozenset(
+    (
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "transfer-encoding",
+        "upgrade",
+    )
+)

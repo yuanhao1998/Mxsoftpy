@@ -24,8 +24,8 @@ class BaseDB:
         :param host: 主机
         :param port: 端口
         """
-        self.__chl = CBSHandleLoc()
-        self.__handle = None
+        self._chl = CBSHandleLoc()
+        self._handle = None
         self.host, self.port = host, port
         self.__cls_value(self.host, self.port)
 
@@ -34,7 +34,7 @@ class BaseDB:
         """
         返回数据库操作句柄
         """
-        return self.__chl.GetConfHandle()
+        return self._chl.GetConfHandle()
 
     @staticmethod
     def return_value(res: tuple) -> Union[int, str, tuple, None]:
@@ -59,7 +59,7 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        func = getattr(self.__chl, operate)
+        func = getattr(self._chl, operate)
         res = func(*args, **kwargs)
         return self.return_value(res)
 
@@ -71,7 +71,7 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        res = eval(operate)(self.__chl.GetConfHandle(), *args, **kwargs)
+        res = eval(operate)(self._chl.GetConfHandle(), *args, **kwargs)
         return self.return_value(res)
 
     @classmethod
@@ -95,7 +95,7 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        res, self.__handle = eval(operate)(*args, **kwargs)
+        res, self._handle = eval(operate)(*args, **kwargs)
         return self.return_value(res)
 
     def exec2(self, operate: str, *args, **kwargs):
@@ -117,8 +117,8 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        if self.__handle:
-            res = eval(operate)(self.__handle, *args, **kwargs)
+        if self._handle:
+            res = eval(operate)(self._handle, *args, **kwargs)
         else:
             raise DataError('找不到句柄，请先连接到数据库')
         return self.return_value(res)
