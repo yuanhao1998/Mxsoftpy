@@ -14,7 +14,7 @@ from .db_def.def_type import type_map, type_c_python, type_c_str
 from .exception import DBError, DataError
 
 sql_symbol_map = {
-    'e': '=',    # 等于
+    'e': '=',  # 等于
     'ne': '!=',  # 不等于
     'gt': '>',  # 大于
     'lt': '<',  # 小于
@@ -226,8 +226,8 @@ class TableDB(BaseDB):
                 symbol = 'e'
 
             if symbol == 'in':
-                assert isinstance(tuple(value) if isinstance(value, list) else value, tuple), \
-                    '查询格式错误！正确示例：a__in=(1, 3, 4, 5)'
+                value = tuple(value) if isinstance(value, list) else value
+                assert isinstance(value, tuple), '查询格式错误！正确示例：a__in=(1, 3, 4, 5)'
                 assert len(value) != 0, '使用in时元组不能为空'
 
             elif symbol == 'between':
@@ -235,7 +235,8 @@ class TableDB(BaseDB):
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
             query_list.append(
-                "%s %s %s" % (key, sql_symbol_map[symbol], value if type(value).__name__ != 'str' else '\'' + value + '\''))
+                "%s %s %s" % (
+                key, sql_symbol_map[symbol], value if type(value).__name__ != 'str' else '\'' + value + '\''))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
