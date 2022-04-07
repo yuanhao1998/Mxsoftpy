@@ -99,7 +99,7 @@ class Mx(BaseMx):
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
                        [(k, v) for k, v in response.request.headers.items() if k not in hop_by_hop])
-        yield [bytes(response.data, encoding='utf-8')]
+        return [bytes(response.data, encoding='utf-8')]
 
     def preprocess_request(self):
         """
