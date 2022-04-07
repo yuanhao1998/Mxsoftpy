@@ -3,39 +3,12 @@
 # @Remark  : 缓存操作方法，适配redis数据库
 from typing import Union, List, Any
 
-import redis
 from superbsapi import *
 from mxsoftpy import Model
 from mxsoftpy.db_def.db_error import BS_NOERROR
 from mxsoftpy.db_def.def_type import type_map
 from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.exception import DBError
-from mxsoftpy.globals import redis_pool
-
-
-class RedisDB(redis.Redis):
-
-    def __init__(self):
-        super().__init__()
-        self.__conn: redis.Redis = None
-
-    def open(self, file: int = 0, decode_responses: bool = True) -> redis.Redis:
-        """
-        打开数据库
-        :param file: 数据库
-        :param decode_responses: 取出的结果是否解码， False 返回字节、True 返回decode的数据
-        """
-        self.__conn = redis.Redis(connection_pool=redis_pool().get(file), db=file, decode_responses=decode_responses)
-        return self.__conn
-
-    def __getattribute__(self, name: str):
-        if name.startswith("_"):
-            return super().__getattribute__(name)
-        else:
-            try:
-                return self.__conn.__getattribute__(name)
-            except BaseException:
-                return super().__getattribute__(name)
 
 
 class CacheDB(BaseDB):
@@ -163,7 +136,13 @@ class CacheDB(BaseDB):
         :param name: hash名称
         :param key: key
         """
-        return self.exec_bs('bs_memdb_hget', name, key)
+        try:
+            return self.exec_bs('bs_memdb_hget', name, key)
+        except DBError as e:
+            if e.err_code == 28:  # 错误码28代表不存在此hash，此时返回None而不是报错
+                return None
+            else:
+                raise DBError(e.err_code)
 
     def hmset(self, name: str, items: Union[List[tuple], dict, Model]) -> int:
         """

@@ -2,10 +2,10 @@
 # @Create   : 2021/8/19 14:56
 # @Author   : yh
 # @Remark   : mx框架db层
+from .CacheDB import CacheDB
 from .mqDB import MQ
 from .TableDB import TableDB
 from .TreeDB import TreeDB
-from .CacheDB import RedisDB
 
 
 class DB:
@@ -14,4 +14,4 @@ class DB:
         self.tree = TreeDB()
         self.table = TableDB()
         self.mq = MQ()
-        self.redis = RedisDB()
+        self.cache = CacheDB()
