@@ -230,7 +230,7 @@ def code_changed():
     """
 
     for module in sys.modules.values():
-        # get filename
+
         filename = getattr(module, '__file__', None)
         if not (filename and os.path.isfile(filename)):
             continue
