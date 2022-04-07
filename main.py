@@ -4,6 +4,7 @@
 # @Remark   : 主入口文件
 import json
 import sys
+import os
 import typing as t
 
 from pydantic import ValidationError
@@ -98,7 +99,7 @@ class Mx(BaseMx):
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
                        [(k, v) for k, v in response.request.headers.items() if k not in hop_by_hop])
-        return [bytes(response.data, encoding='utf-8')]
+        yield [bytes(response.data, encoding='utf-8')]
 
     def preprocess_request(self):
         """
@@ -218,3 +219,34 @@ class Mx(BaseMx):
         if environ and start_response:
             return self.full_dispatch_wsgi_request(environ, start_response)
         self.full_dispatch_request(session)
+
+
+_mtimes = {}
+
+
+def code_changed():
+    """
+    检测代码是否修改
+    """
+
+    for module in sys.modules.values():
+        # get filename
+        filename = getattr(module, '__file__', None)
+        if not (filename and os.path.isfile(filename)):
+            continue
+
+        if filename[-4:] in ('.pyc', '.pyo', '.pyd'):
+            filename = filename[:-1]
+
+        try:
+            mtime = os.stat(filename).st_mtime
+        except OSError:
+            continue
+
+        old_time = _mtimes.get(module)
+        if old_time is None:
+            _mtimes[module] = mtime
+        elif old_time < mtime:
+            _mtimes[module] = mtime
+            return True
+    return False
