@@ -56,7 +56,7 @@ class CacheDB(BaseDB):
         :param port: 端口
         """
 
-        _host, _port = self._get_host_port(file_name)
+        _host, _port = self._get_host_port2(file_name)
         return self.exec2('bs_memdb_create_newfile', file_name, config_name, host or _host, port or _port)
 
     def open(self, file: str = None, host: str = None, port: int = None) -> "CacheDB":
