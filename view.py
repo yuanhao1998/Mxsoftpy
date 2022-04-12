@@ -272,7 +272,7 @@ class Request:
         for key, val in json_data.items():
             try:
                 json_data[key] = val if isinstance(ast.literal_eval(val), int) else ast.literal_eval(val)
-            except ValueError:
+            except (ValueError, SyntaxError):
                 json_data[key] = val
         return json.loads(post_data)
 
@@ -344,6 +344,7 @@ class WSGIRequest:
     """
     解析来来自WSGI Server的请求参数
     """
+
     def __init__(self, environ: dict):
         self.environ = environ
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
