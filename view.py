@@ -268,6 +268,12 @@ class Request:
         """
         解析json
         """
+        json_data = json.loads(post_data)
+        for key, val in json_data.items():
+            try:
+                json_data[key] = val if isinstance(ast.literal_eval(val), int) else ast.literal_eval(val)
+            except ValueError:
+                json_data[key] = val
         return json.loads(post_data)
 
     @property
