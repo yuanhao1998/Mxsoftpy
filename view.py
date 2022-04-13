@@ -2,6 +2,7 @@
 # @Create   : 2021/5/17 9:46
 # @Author   : yh
 # @Remark   : session处理类
+import ast
 import json
 import typing as t
 from urllib.parse import parse_qs
@@ -274,7 +275,7 @@ class Request:
                 json_data[key] = val if isinstance(ast.literal_eval(val), int) else ast.literal_eval(val)
             except (ValueError, SyntaxError):
                 json_data[key] = val
-        return json.loads(post_data)
+        return json_data
 
     @property
     def web_path(self) -> str:
