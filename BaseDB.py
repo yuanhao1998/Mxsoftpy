@@ -197,13 +197,15 @@ class BaseDB:
         """
         判断所使用的数据库，优先层次：
                                 1：当前公司同名数据库
-                                2：base
+                                2：Co_1
         """
         # noinspection PyBroadException
         try:
-            return request().company
+            company = request().company or 'Co_1'
         except Exception:
-            return 'Co_1'
+            company = 'Co_1'
+
+        return company
 
     @staticmethod
     def _get_host_port2(key):
