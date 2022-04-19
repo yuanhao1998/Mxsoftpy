@@ -69,6 +69,16 @@ class TreeDB(BaseDB):
         # TODO 用到了再写吧
         # return self.exec_bs('bs_treedb_delete_index')
 
+    def get_index_names(self):
+        """
+        查询索引名称
+        :return: ["id","name"]
+        """
+        # 如果没有会报错 223
+        index_list = []
+        self.exec_bs('bs_treedb_get_index_names', index_list)
+        return index_list
+
     def open(self, main_key: str, sub_key: str = None, host: str = None, file: str = None,
              main_key_pwd: str = '', flag: int = None, port: int = None, path_flag: bool = False) -> "TreeDB":
         """
@@ -440,8 +450,10 @@ class TreeDB(BaseDB):
 
         default_query_conditions = list()
         for arg in args:
-            assert arg['symbol'] in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in symbol_map]), arg['symbol'])
-            assert arg['value_type'] in type_map, '查询数据类型！正确操作包含：%s，您的数据类型：%s' % (str([i for i in type_map]), arg['value_type'])
+            assert arg['symbol'] in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (
+            str([i for i in symbol_map]), arg['symbol'])
+            assert arg['value_type'] in type_map, '查询数据类型！正确操作包含：%s，您的数据类型：%s' % (
+            str([i for i in type_map]), arg['value_type'])
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
             if arg.get('range_conditions'):
