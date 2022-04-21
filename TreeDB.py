@@ -85,7 +85,7 @@ class TreeDB(BaseDB):
         打开数据库键 [只打开主键或子键 / 同时打开主键和子键（子键路径）]
         eg: db = TreeModel()
             db.open('MXSE', '1.SD', file='ccubase', host='127.0.0.1')
-            
+
         :param main_key: 主键名
         :param sub_key: 子键名
         :param host: 主机名
@@ -168,7 +168,7 @@ class TreeDB(BaseDB):
         """
         获取当前键下所有的子键名
         eg: sub_keys = db.open('MXSE', '1.SD', file='ccubase').sub_keys()
-        
+
         :return: 子键列表
         """
         res_list = list()
@@ -181,7 +181,7 @@ class TreeDB(BaseDB):
         eg: sub_items = db.open('MXSE', '1.SD', file='ccubase').sub_items(
                                 key_list=['1.SD.1', '1.SD.2'], prop_list='_target_ip')
         <<<!!! 当key_list为空的时候会获取全部，需要自行注意 !!!>>>
-            
+
         :param key_list: 要获取的子键列表
         :param prop_list: 要获取的属性列表
         :return: 子键及其属性字典
@@ -199,7 +199,7 @@ class TreeDB(BaseDB):
         """
         获取当前键下、指定属性的 key-value键值对, prop_list为空会获取所有属性
         eg: items = db.open('MXSE', '1.SD', file='ccubase').items(['max', 'mx_updatedatatime'])
-        
+
         :param prop_list: 要获取属性
         """
         prop_list = [prop_list] if isinstance(prop_list, str) else prop_list
@@ -414,7 +414,10 @@ class TreeDB(BaseDB):
                     i += 1
                     j += 1
                 expression_temp += ')'
-                expression_list.append(expression_temp)
+
+                # 当in一个值的时候，expression_temp去掉括号，因为不再有 or
+                expression_list.append(expression_temp if expression_temp.find('or') != -1
+                                       else ' %s ' % eval(expression_temp))
             elif symbol == 'between':
                 assert isinstance(value, list) and len(value) in [2, 3], '查询格式错误！正确示例：a__between=[1, 3]'
                 temp['range_conditions'] = {'vLiData': value[0], 'vEnd': value[1]}
@@ -451,9 +454,9 @@ class TreeDB(BaseDB):
         default_query_conditions = list()
         for arg in args:
             assert arg['symbol'] in symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (
-            str([i for i in symbol_map]), arg['symbol'])
+                str([i for i in symbol_map]), arg['symbol'])
             assert arg['value_type'] in type_map, '查询数据类型！正确操作包含：%s，您的数据类型：%s' % (
-            str([i for i in type_map]), arg['value_type'])
+                str([i for i in type_map]), arg['value_type'])
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
             if arg.get('range_conditions'):
