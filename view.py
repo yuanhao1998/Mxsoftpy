@@ -352,7 +352,7 @@ class WSGIRequest:
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
         self.module_list = None  # 所有模块列表
 
-        self.url = self.environ.get('REQUEST_URI', '')
+        self.url = self.environ.get('REQUEST_URI', '').split('?')[0]  # 请求的url
         self.peer_ip = self.environ.get('REMOTE_ADDR', '')
         self.request_type = self.environ.get('REQUEST_METHOD', 'GET')
         self._content_type = self.environ.get('CONTENT_TYPE', '')
