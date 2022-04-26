@@ -3,8 +3,11 @@
 # @Author   : yh
 # @Remark   : 主入口文件
 import json
+import subprocess
 import sys
 import os
+import threading
+import time
 import typing as t
 
 from pydantic import ValidationError
@@ -220,33 +223,125 @@ class Mx(BaseMx):
             return self.full_dispatch_wsgi_request(environ, start_response)
         self.full_dispatch_request(session)
 
+    def run(self, listen='*:7121', reload=False, **kwargs):
+        """
+        运行服务
+        :param listen: 监听地址
+        :param reload: 是否自动重载
+        """
+        from waitress import serve
 
-_mtimes = {}
+        if reload:
+            self.run_with_reloader(serve, listen=listen, **kwargs)
+        else:
+            serve(self, listen=listen, **kwargs)
+
+    def run_with_reloader(self, main_func, **kwargs):
+        """
+        自动重载实现
+        """
+        reloader = Reloader()
+        if os.environ.get('WAITRESS_RUN_MAIN') == 'true':
+            thread = threading.Thread(target=main_func, args=(self, ), kwargs=kwargs)
+            thread.setDaemon(True)
+            thread.start()
+            reloader.code_changed()
+        else:
+            sys.exit(reloader.restart_with_reloader())
 
 
-def code_changed():
+class Reloader:
     """
-    检测代码是否修改
+    自动重载实现类
     """
 
-    for module in sys.modules.values():
+    def __init__(self):
+        self._mtimes = {}
 
-        filename = getattr(module, '__file__', None)
-        if not (filename and os.path.isfile(filename)):
-            continue
+    @staticmethod
+    def _get_args_for_reloading() -> t.List[str]:
+        """
+        获取重载参数 （python解释器路径、启动文件、参数等）
+        """
 
-        if filename[-4:] in ('.pyc', '.pyo', '.pyd'):
-            filename = filename[:-1]
+        rv = [sys.executable]
+        py_script = sys.argv[0]
+        args = sys.argv[1:]
+        __main__ = sys.modules["__main__"]
 
-        try:
-            mtime = os.stat(filename).st_mtime
-        except OSError:
-            continue
+        if getattr(__main__, "__package__", None) is None or (
+                os.name == "nt"
+                and __main__.__package__ == ""
+                and not os.path.exists(py_script)
+                and os.path.exists(f"{py_script}.exe")
+        ):
+            py_script = os.path.abspath(py_script)
 
-        old_time = _mtimes.get(module)
-        if old_time is None:
-            _mtimes[module] = mtime
-        elif old_time < mtime:
-            _mtimes[module] = mtime
-            return True
-    return False
+            if os.name == "nt":
+
+                if not os.path.exists(py_script) and os.path.exists(f"{py_script}.exe"):
+                    py_script += ".exe"
+
+                if (
+                        os.path.splitext(sys.executable)[1] == ".exe"
+                        and os.path.splitext(py_script)[1] == ".exe"
+                ):
+                    rv.pop(0)
+
+            rv.append(py_script)
+        else:
+            if sys.argv[0] == "-m":
+                args = sys.argv
+            else:
+                if os.path.isfile(py_script):
+                    py_module = t.cast(str, __main__.__package__)
+                    name = os.path.splitext(os.path.basename(py_script))[0]
+
+                    if name != "__main__":
+                        py_module += f".{name}"
+                else:
+                    py_module = py_script
+
+                rv.extend(("-m", py_module.lstrip(".")))
+
+        rv.extend(args)
+        return rv
+
+    def restart_with_reloader(self):
+        """
+        重载调用
+        """
+        while True:
+            new_environ = os.environ.copy()
+            new_environ['WAITRESS_RUN_MAIN'] = 'true'
+            exit_code = subprocess.call(self._get_args_for_reloading(), env=new_environ)
+            if exit_code != 3:
+                return exit_code
+
+    def code_changed(self):
+        """
+        检测代码是否修改
+        """
+        while True:
+            time.sleep(0.5)  # 每隔0.5秒检测一次、降低资源消耗。
+            for module in sys.modules.values():
+
+                filename = getattr(module, '__file__', None)
+                if not (filename and os.path.isfile(filename)):
+                    continue
+
+                if filename[-4:] in ('.pyc', '.pyo', '.pyd'):
+                    filename = filename[:-1]
+
+                try:
+                    mtime = os.stat(filename).st_mtime
+                except OSError:
+                    continue
+
+                old_time = self._mtimes.get(module)
+                if old_time is None:
+                    self._mtimes[module] = mtime
+                elif old_time < mtime:
+                    self._mtimes[module] = mtime
+                    print('-------------监测到修改数据、自动重载---------------')
+                    return sys.exit(3)
