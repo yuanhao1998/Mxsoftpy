@@ -119,6 +119,7 @@ class Mx(BaseMx):
         处理after request列表
         :param response: 响应
         """
+        response.request.headers['content-type'] = response.request.content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
 
