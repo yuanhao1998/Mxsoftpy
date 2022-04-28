@@ -270,11 +270,37 @@ class Request:
         解析json
         """
         json_data = json.loads(post_data)
-        for key, val in json_data.items():
-            try:
-                json_data[key] = val if isinstance(ast.literal_eval(val), int) else ast.literal_eval(val)
-            except (ValueError, SyntaxError):
-                json_data[key] = val
+
+        def _dumps_json(j_data):
+
+            if isinstance(j_data, list):
+                """列表分支"""
+                for idx, data_ in enumerate(j_data):
+                    try:
+                        data_ = data_ if isinstance(json.loads(data_), int) else json.loads(data_)
+                    except (ValueError, SyntaxError, TypeError):
+                        pass
+
+                    """判断是否需要递归"""
+                    if isinstance(data_, dict) or isinstance(data_, list):
+                        data_ = _dumps_json(data_)
+                    j_data[idx] = data_
+                return j_data
+
+            elif isinstance(j_data, dict):
+                """字典分支"""
+                for key, val in j_data.items():
+                    try:
+                        j_data[key] = val if isinstance(json.loads(val), int) else json.loads(val)
+                    except (ValueError, SyntaxError, TypeError):
+                        pass
+
+                    """判断是否需要递归"""
+                    if isinstance(j_data[key], dict) or isinstance(j_data[key], list):
+                        j_data[key] = _dumps_json(j_data[key])
+                return j_data
+
+        json_data = _dumps_json(json_data)
         return json_data
 
     @property
