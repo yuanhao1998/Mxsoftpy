@@ -2,7 +2,7 @@
 # @Create   : 2021/5/17 9:46
 # @Author   : yh
 # @Remark   : session处理类
-import ast
+import logging
 import json
 import typing as t
 from urllib.parse import parse_qs
@@ -12,9 +12,81 @@ from .exception import CError, HTTPMethodError, DataError, AuthError
 from .globals import request
 
 
-class Request:
+class SessionData:
+
+    def __init__(self):
+        self._session_id = None
+        self._company = None
+        self._user = None
+        self._user_id = None
+        self._user_group = None
+
+    @property
+    def cookie(self) -> dict:
+        raise NotImplementedError
+
+    @property
+    def session_id(self) -> str:
+        """
+        获取session id
+        """
+        return self.cookie.get('mxsessionid')
+
+    @property
+    def company(self) -> str:
+        """
+        获取公司
+        """
+        if self._company:
+            return self._company
+        else:
+            from py_opm_wm_bm import GetSessionCompany
+            flag, company = GetSessionCompany(self.session_id)
+            if flag == 0 or flag is True:
+                self._company = company
+                return self._company
+            else:
+                logging.error('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+                raise AuthError('session异常, 获取公司失败')
+
+    @property
+    def user(self) -> str:
+        """
+        获取当前登录用户
+        """
+        if self._user:
+            return self._user
+        else:
+            from py_opm_wm_bm import GetSessionUserId
+            flag, user = GetSessionUserId(self.session_id)
+            if flag == 0 or flag is True:
+                self._user = user
+                return self._user
+            else:
+                logging.error('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+                raise AuthError('session异常, 获取用户失败')
+
+    @property
+    def user_group(self) -> str:
+        """
+        获取登录用户组
+        """
+        if self._user_group:
+            return self._user_group
+        else:
+            from py_opm_wm_bm import GetSessionUserGroupId
+            flag, user_group = GetSessionUserGroupId(self.session_id)
+            if flag == 0 or flag is True:
+                self._user_group = user_group
+                return self._user_group
+            else:
+                logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败' % flag)
+                raise AuthError('session异常, 获取用户组失败')
+
+
+class Request(SessionData):
     """
-    session处理基类
+    Request请求解析类
     """
 
     def __init__(self, session, *args, **kwargs):
@@ -35,50 +107,6 @@ class Request:
         self._web_path = None
         self._request_type = None
         self._content_type = None
-        self._session_id = None
-        self._company = None
-        self._user = None
-
-    @property
-    def session_id(self):
-        """
-        获取session id
-        """
-        # from mxsoft import CheckMxSession
-        # return CheckMxSession(self.session)
-        return self.cookie.get('mxsessionid')
-
-    @property
-    def company(self):
-        """
-        获取公司
-        """
-        if self._company:
-            return self._company
-        else:
-            from py_opm_wm_bm import GetSessionCompany
-            flag, company = GetSessionCompany(self.session_id)
-            if flag == 0 or flag is True:
-                self._company = company
-                return self._company
-            else:
-                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
-
-    @property
-    def user(self):
-        """
-        获取用户
-        """
-        if self._user:
-            return self._user
-        else:
-            from py_opm_wm_bm import GetSessionUserId
-            flag, user = GetSessionUserId(self.session_id)
-            if flag == 0 or flag is True:
-                self._user = user
-                return self._user
-            else:
-                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
 
     @property
     def request_headers_cls(self):
@@ -367,12 +395,13 @@ class Request:
         raise CError("读取上传文件错误")
 
 
-class WSGIRequest:
+class WSGIRequest(SessionData):
     """
     解析来来自WSGI Server的请求参数
     """
 
-    def __init__(self, environ: dict):
+    def __init__(self, environ: dict, *args, **kwargs):
+        super().__init__()
         self.environ = environ
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
@@ -387,49 +416,6 @@ class WSGIRequest:
         self._GET = None
         self._POST = None
         self._web_path = None
-
-        self._session_id = None
-        self._company = None
-        self._user = None
-
-    @property
-    def session_id(self):
-        """
-        获取session id
-        """
-        return self.cookie.get('mxsessionid')
-
-    @property
-    def company(self):
-        """
-        获取公司
-        """
-        if self._company:
-            return self._company
-        else:
-            from py_opm_wm_bm import GetSessionCompany
-            flag, company = GetSessionCompany(self.session_id)
-            if flag == 0 or flag is True:
-                self._company = company
-                return self._company
-            else:
-                raise AuthError('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
-
-    @property
-    def user(self):
-        """
-        获取用户
-        """
-        if self._user:
-            return self._user
-        else:
-            from py_opm_wm_bm import GetSessionUserId
-            flag, user = GetSessionUserId(self.session_id)
-            if flag == 0 or flag is True:
-                self._user = user
-                return self._user
-            else:
-                raise AuthError('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
 
     @property
     def headers(self) -> dict:
