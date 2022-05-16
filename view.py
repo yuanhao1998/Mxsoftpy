@@ -319,7 +319,7 @@ class Request(SessionData):
                 """字典分支"""
                 for key, val in j_data.items():
                     try:
-                        j_data[key] = val if isinstance(json.loads(val), int) else json.loads(val)
+                        j_data[key] = val if isinstance(json.loads(val), int) or isinstance(json.loads(val), float) else json.loads(val)
                     except (ValueError, SyntaxError, TypeError):
                         pass
 
