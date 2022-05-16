@@ -373,23 +373,13 @@ class TreeDB(BaseDB):
         """
         return self.exec_tree('Treedb_RenameProperty', old_prop, new_prop)
 
-    def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
+    @staticmethod
+    def __generate_filter_data(kwargs: dict) -> tuple:
         """
-        根据属性筛选符合条件的子键（可分页显示）
-
-        :param default_expression: 手动传入条件关系，默认关系为 and
-        :param is_desc: 是否反序
-        :param order_by: 排序字段
-        :param page_index: 第几页
-        :param page_size: 每页条数
-        :param kwargs: 传入的查询条件
-        :return: 总条数，查询结果
+        生成查询条件
+        :param kwargs: 查询参数
         """
-
-        args, range_conditions = list(), dict()
-
-        i = 0
-        expression_list = list()
+        args, expression_list, i = list(), list(), 0
 
         for key, value in kwargs.items():
             try:
@@ -463,9 +453,40 @@ class TreeDB(BaseDB):
                 data.update(arg['range_conditions'])
             default_query_conditions.append(data)
 
+        return default_query_conditions, expression_list
+
+    def filter_update(self, __prop__, __value__, __value_type__=None, default_expression=None, **kwargs):
+        """
+        根据属性筛选符合条件的子键、更新属性
+
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param __prop__: 要修改的属性
+        :param __value__: 更新的值
+        :param __value_type__: 更新的值类型，不传会自动获取
+
+        """
+        default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
+        self.exec_bs('bs_treedb_edit_property_by_condition', default_query_conditions,
+                     default_expression or ' and '.join(expression_list),
+                     __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
+
+    def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
+        """
+        根据属性筛选符合条件的子键（可分页显示）
+
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param is_desc: 是否反序
+        :param order_by: 排序字段
+        :param page_index: 第几页
+        :param page_size: 每页条数
+        :param kwargs: 传入的查询条件
+        :return: 总条数，查询结果
+        """
+        default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
+
         res_list = list()
         res = self.exec_bs('bs_treedb_query_subkey_by_condition_ex', default_query_conditions,
-                           default_expression if default_expression else ' and '.join(expression_list),
+                           default_expression or ' and '.join(expression_list),
                            res_list, page_size, (page_index - 1) * page_size, order_by, is_desc)
 
         return res, res_list
