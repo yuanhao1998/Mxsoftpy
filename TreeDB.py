@@ -466,9 +466,9 @@ class TreeDB(BaseDB):
 
         """
         default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
-        self.exec_bs('bs_treedb_edit_property_by_condition', default_query_conditions,
-                     default_expression or ' and '.join(expression_list),
-                     __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
+        return self.exec_bs('bs_treedb_edit_property_by_condition', default_query_conditions,
+                            default_expression or ' and '.join(expression_list),
+                            __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
 
     def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
         """

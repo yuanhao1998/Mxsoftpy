@@ -231,6 +231,10 @@ class Mx(BaseMx):
         :param reload: 是否自动重载
         """
         from waitress import serve
+        from utils.middleware.cache import add_cache
+        print('-------------python开始加载缓存-------------')
+        add_cache()
+        print('-------------python加载缓存结束-------------')
 
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)

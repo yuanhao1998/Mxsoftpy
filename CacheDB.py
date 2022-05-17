@@ -6,6 +6,7 @@ from typing import Union, List, Any
 from superbsapi import *
 from mxsoftpy import Model
 from mxsoftpy.db_def.db_error import BS_NOERROR
+from mxsoftpy.db_def.def_tree import *
 from mxsoftpy.db_def.def_type import type_map
 from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.exception import DBError
@@ -59,14 +60,23 @@ class CacheDB(BaseDB):
         _host, _port = self._get_host_port2(file_name)
         return self.exec2('bs_memdb_create_newfile', file_name, config_name, host or _host, port or _port)
 
-    def open(self, file: str = None, host: str = None, port: int = None) -> "CacheDB":
+    def open(self, db: str = None, file: str = 'Cache', host: str = None, port: int = None,
+             path_flag: bool = False) -> "CacheDB":
         """
         打开数据库
+
+        :param db: 要打开的数据库
+        :param file: 要打开的数据库文件
+        :param host: 主键ip
+        :param port: 端口
+        :param path_flag: 如果db不存在是否自动创建
+        :return:
         """
 
         _host, _port = self._get_host_port(file)
-        file = 'Cache_' + (file or self._get_file())
-        self.exec('bs_memdb_open', file, host or _host, port or _port)
+        self.exec('bs_memdb_open', db or self._get_file(), TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+                  file, host or _host, port or _port)
+
         return self
 
     def set(self, key: str, value: str, value_type=None, expire: int = -1, create=False, update=False) -> int:
