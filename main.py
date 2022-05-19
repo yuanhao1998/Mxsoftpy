@@ -224,6 +224,13 @@ class Mx(BaseMx):
             return self.full_dispatch_wsgi_request(environ, start_response)
         self.full_dispatch_request(session)
 
+    @staticmethod
+    def load_cache():
+        from utils.middleware.cache import add_cache
+        print('-------------python开始加载缓存-------------')
+        add_cache()
+        print('-------------python加载缓存结束-------------')
+
     def run(self, listen='*:7121', reload=False, **kwargs):
         """
         运行服务
@@ -231,14 +238,11 @@ class Mx(BaseMx):
         :param reload: 是否自动重载
         """
         from waitress import serve
-        from utils.middleware.cache import add_cache
-        print('-------------python开始加载缓存-------------')
-        add_cache()
-        print('-------------python加载缓存结束-------------')
 
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)
         else:
+            self.load_cache()
             serve(self, listen=listen, **kwargs)
 
     def run_with_reloader(self, main_func, **kwargs):
@@ -252,6 +256,7 @@ class Mx(BaseMx):
             thread.start()
             reloader.code_changed()
         else:
+            self.load_cache()
             sys.exit(reloader.restart_with_reloader())
 
 
