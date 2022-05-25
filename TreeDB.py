@@ -13,18 +13,17 @@ from .db_def.def_type import *
 from .db_def.def_tree import *
 
 symbol_map = {
-    'e': TRDB_FMC_EQUAL,  # 等于
-    'ne': TRDB_FMC_UNEQUAL,  # 不等于
-    'gt': TRDB_FMC_GREATERTHAN,  # 大于
-    'lt': TRDB_FMC_LESSTHAN,  # 小于
+    'e': TRDB_FMC_EQUAL,                 # 等于
+    'ne': TRDB_FMC_UNEQUAL,              # 不等于
+    'gt': TRDB_FMC_GREATERTHAN,          # 大于
+    'lt': TRDB_FMC_LESSTHAN,             # 小于
     'gte': TRDB_FMC_EQUALORGREATERTHAN,  # 大于等于
-    'lte': TRDB_FMC_EQUALORLESSTHAN,  # 小于等于
+    'lte': TRDB_FMC_EQUALORLESSTHAN,     # 小于等于
 
-    'like': TRDB_FMC_LIKE,  # 模糊匹配，使用 * 做为通配符
-    'nclike': TRDB_FMC_NOCASE_LIKE,  # 模糊匹配，不区分大小写
-    'in': TRDB_FMC_RANGE,  # 范围查找（枚举）
-    'between': TRDB_FMC_RANGE  # 范围查找（范围）
-    # 其他的类型，以后用到了再添加
+    'like': TRDB_FMC_LIKE,               # 模糊匹配，使用 * 做为通配符
+    'nclike': TRDB_FMC_NOCASE_LIKE,      # 模糊匹配，不区分大小写
+    'in': TRDB_FMC_IN,                   # 范围查找（枚举）
+    'between': TRDB_FMC_RANGE            # 范围查找（范围）
 }
 
 
@@ -393,21 +392,11 @@ class TreeDB(BaseDB):
             if symbol == 'in':
                 assert isinstance(value, list), '查询格式错误！正确示例：a__in=[1, 3, 4, 5]'
                 assert len(value) != 0, '使用in时列表不能为空'
-                j = 0
-                for v in value:
-                    temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'e', 'value': v}
-                    args.append(temp)
-                    if j == 0:
-                        expression_temp = '(%s' % i
-                    else:
-                        expression_temp += ' or ' + str(i)
-                    i += 1
-                    j += 1
-                expression_temp += ')'
-
-                # 当in一个值的时候，expression_temp去掉括号，因为不再有 or
-                expression_list.append(expression_temp if expression_temp.find('or') != -1
-                                       else ' %s ' % eval(expression_temp))
+                temp['vInValues'] = temp['value']
+                temp['value_type'] = type(value[0]).__name__
+                expression_list.append(' %s ' % i)
+                args.append(temp)
+                i += 1
             elif symbol == 'between':
                 assert isinstance(value, list) and len(value) in [2, 3], '查询格式错误！正确示例：a__between=[1, 3]'
                 temp['range_conditions'] = {'vLiData': value[0], 'vEnd': value[1]}
@@ -449,8 +438,13 @@ class TreeDB(BaseDB):
                 str([i for i in type_map]), arg['value_type'])
             data = {'name': arg['key'], 'nCondition': symbol_map[arg['symbol']], 'vLiData': arg['value'],
                     'vLiDataType': type_map[arg['value_type']]}
-            if arg.get('range_conditions'):
+
+            if arg.get('range_conditions'):  # 判断是否有between
                 data.update(arg['range_conditions'])
+            if arg.get('vInValues'):  # 判断是否有in
+                del data['vLiData']
+                data.update({'vInValues': arg['vInValues']})
+
             default_query_conditions.append(data)
 
         return default_query_conditions, expression_list
