@@ -512,6 +512,8 @@ class WSGIRequest(SessionData):
 
         res = []
         for file in fs.list:
+            if not file.filename:
+                continue
             if not self.allowed_file(file.filename):
                 raise FileError('不支持的文件类型: %s' % file.filename)
 
