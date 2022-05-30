@@ -2,13 +2,15 @@
 # @Create   : 2021/5/17 9:46
 # @Author   : yh
 # @Remark   : session处理类
+import cgi
 import logging
 import json
+import os
 import typing as t
 from urllib.parse import parse_qs
 
 from .def_http_code import HttpCode, HttpType
-from .exception import CError, HTTPMethodError, DataError, AuthError
+from .exception import CError, HTTPMethodError, DataError, AuthError, FileError
 from .globals import request
 
 
@@ -406,6 +408,7 @@ class WSGIRequest(SessionData):
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
         self.module_list = None  # 所有模块列表
+        self.config = None  # 配置文件
 
         self.url = self.environ.get('REQUEST_URI', '').split('?')[0]  # 请求的url
         self.peer_ip = self.environ.get('REMOTE_ADDR', '')
@@ -492,6 +495,30 @@ class WSGIRequest(SessionData):
                 raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
             self._POST = data
             return self._POST
+
+    def allowed_file(self, filename) -> bool:
+        """
+        判断是否是允许的文件类型
+        :param filename: 要查询的文件
+        """
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.config.ALLOWED_EXTENSIONS
+
+    def upload(self, path: str = None):
+        """
+        存储上传的文件
+        :param path: 上传路径, 不传使用默认配置
+        """
+        fs = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ, keep_blank_values=1)
+
+        res = []
+        for file in fs.list:
+            if not self.allowed_file(file.filename):
+                raise FileError('不支持的文件类型: %s' % file.filename)
+
+            with open(os.path.join(path or self.config.TMP_DIR, file.filename), 'wb') as f:
+                f.write(file.value)
+            res.append({'name': file.name, 'filename': file.filename, 'data': file.value, 'detail': file})
+        return res[0] if len(res) == 1 else res
 
     @property
     def PUT(self) -> t.Any:
@@ -592,7 +619,7 @@ class Response:
 
 
 class View:
-    def __init__(self, request: "Request", *args, **kwargs):
+    def __init__(self, request: "WSGIRequest", *args, **kwargs):
         super().__init__()
         self.request = request
 

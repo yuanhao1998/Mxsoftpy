@@ -22,7 +22,7 @@ from .view import Request, Response, WSGIRequest
 if t.TYPE_CHECKING:
     from .module import Module
 
-session_handler: Request  # session处理类，用于globals文件中全局导入request
+session_handler: WSGIRequest  # session处理类，用于globals文件中全局导入request
 
 
 class Mx(BaseMx):
@@ -36,6 +36,7 @@ class Mx(BaseMx):
         self.module_list = []  # 所有模块列表
         self.after_request_funcs = list()  # 响应钩子
         self.before_request_funcs = list()  # 请求钩子
+        self.config = None  # 配置
 
         from .load import load
         load()  # 初始化
@@ -87,6 +88,8 @@ class Mx(BaseMx):
         :param start_response: 响应函数
         """
         self.session_handler = WSGIRequest(environ)
+        self.session_handler.module_list = self.module_list
+        self.session_handler.config = self.config
 
         global session_handler
         session_handler = self.session_handler

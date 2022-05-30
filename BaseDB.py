@@ -215,9 +215,8 @@ class BaseDB:
         #     host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
         # except BaseException:
         try:
-            from utils.conf.mxconfig import MxConfig
-            host = MxConfig.HOST
-            port = MxConfig.PORT
+            host = request().config.HOST
+            port = request().config.PORT
         except (ModuleNotFoundError, ImportError, AttributeError):
             host = '127.0.0.1'
             port = 8123
