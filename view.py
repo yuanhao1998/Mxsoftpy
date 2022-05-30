@@ -503,7 +503,7 @@ class WSGIRequest(SessionData):
         """
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.config.ALLOWED_EXTENSIONS
 
-    def upload(self, path: str = None):
+    def upload_file(self, path: str = None):
         """
         存储上传的文件
         :param path: 上传路径, 不传使用默认配置
@@ -521,6 +521,13 @@ class WSGIRequest(SessionData):
                 f.write(file.value)
             res.append({'name': file.name, 'filename': file.filename, 'data': file.value, 'detail': file})
         return res[0] if len(res) == 1 else res
+
+    def upload(self, path):
+        """
+        文件上传，老的方法，不推荐使用此方法了
+        """
+        file = self.upload_file(path)
+        return file['filename']
 
     @property
     def PUT(self) -> t.Any:
