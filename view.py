@@ -307,7 +307,9 @@ class Request(SessionData):
                 """列表分支"""
                 for idx, data_ in enumerate(j_data):
                     try:
-                        data_ = data_ if isinstance(json.loads(data_), int) else json.loads(data_)
+                        if isinstance(json.loads(data_), (list, dict)):
+                            data_ = json.loads(data_)
+
                     except (ValueError, SyntaxError, TypeError):
                         pass
 
@@ -321,7 +323,9 @@ class Request(SessionData):
                 """字典分支"""
                 for key, val in j_data.items():
                     try:
-                        j_data[key] = val if isinstance(json.loads(val), int) or isinstance(json.loads(val), float) else json.loads(val)
+                        if isinstance(json.loads(val), (list, dict)):
+                            j_data[key] = json.loads(val)
+
                     except (ValueError, SyntaxError, TypeError):
                         pass
 
