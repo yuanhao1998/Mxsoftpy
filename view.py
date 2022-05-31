@@ -32,6 +32,8 @@ class SessionData:
         """
         获取session id
         """
+        if not self.cookie.get('mxsessionid'):
+            raise AuthError('获取session失败，请重新登录')
         return self.cookie.get('mxsessionid')
 
     @property
@@ -507,7 +509,7 @@ class WSGIRequest(SessionData):
         """
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in self.config.ALLOWED_EXTENSIONS
 
-    def upload_file(self, path: str = None):
+    def upload_file(self, path: str = None) -> t.Union[dict, list]:
         """
         存储上传的文件
         :param path: 上传路径, 不传使用默认配置
