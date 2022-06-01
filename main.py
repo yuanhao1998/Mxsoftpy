@@ -2,12 +2,14 @@
 # @Create   : 2021/5/27 11:37
 # @Author   : yh
 # @Remark   : 主入口文件
+import datetime
 import json
 import subprocess
 import sys
 import os
 import threading
 import time
+import traceback
 import typing as t
 
 from pydantic import ValidationError
@@ -37,6 +39,7 @@ class Mx(BaseMx):
         self.after_request_funcs = list()  # 响应钩子
         self.before_request_funcs = list()  # 请求钩子
         self.config = None  # 配置
+        self.i18n = None  # 国际化
 
         from .load import load
         load()  # 初始化
@@ -208,14 +211,18 @@ class Mx(BaseMx):
     def handle_wsgi_user_exception(self, e):
         """
         处理wsgi的异常
-        :param e:
-        :return:
         """
         if isinstance(e, MxBaseException):
             return self.wsgi_mx_base_exception_handler()
         elif isinstance(e, ValidationError):
             return self.validation_error_handler()
         else:
+            log_path = os.path.join(__file__.split('webexpress')[0], 'middle', 'Pymod',
+                                    datetime.date.today().strftime('%Y%m%d') + 'error.log')
+            path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/middle/Pymod/'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            traceback.print_exc(file=open(log_path, 'a+'))
             raise e
 
     def __call__(self, environ=None, start_response=None, session=None):
