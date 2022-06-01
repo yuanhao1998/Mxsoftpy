@@ -217,7 +217,7 @@ class Mx(BaseMx):
         elif isinstance(e, ValidationError):
             return self.validation_error_handler()
         else:
-            log_path = os.path.join(__file__.split('webexpress')[0], 'middle', 'Pymod',
+            log_path = os.path.join(__file__.split('Server')[0], "Server",'middle', 'Pymod',
                                     datetime.date.today().strftime('%Y%m%d') + 'error.log')
             path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/middle/Pymod/'
             if not os.path.exists(path):
