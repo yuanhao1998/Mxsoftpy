@@ -424,7 +424,6 @@ class WSGIRequest(SessionData):
         self._cookie = None
         self._GET = None
         self._POST = None
-        self._web_path = None
 
     @property
     def headers(self) -> dict:
@@ -587,6 +586,13 @@ class WSGIRequest(SessionData):
         :param value: 响应头的值
         """
         self.headers[header] = value
+
+    @property
+    def web_path(self) -> str:
+        """
+        获取web服务所在目录
+        """
+        return os.path.join(__file__.split('webexpress')[0], 'webexpress')
 
 
 class Response:
