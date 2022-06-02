@@ -296,7 +296,6 @@ class Request(SessionData):
         """
         return {k: v[0] for k, v in parse_qs(post_data, keep_blank_values=True).items()}
 
-
     @staticmethod
     def _post_json(post_data: str) -> dict:
         """
@@ -310,7 +309,9 @@ class Request(SessionData):
                 """列表分支"""
                 for idx, data_ in enumerate(j_data):
                     try:
-                        data_ = data_ if isinstance(json.loads(data_), int) else json.loads(data_)
+                        if isinstance(json.loads(data_), (list, dict)):
+                            data_ = json.loads(data_)
+
                     except (ValueError, SyntaxError, TypeError):
                         pass
 
@@ -324,7 +325,9 @@ class Request(SessionData):
                 """字典分支"""
                 for key, val in j_data.items():
                     try:
-                        j_data[key] = val if isinstance(json.loads(val), int) or isinstance(json.loads(val), float) else json.loads(val)
+                        if isinstance(json.loads(val), (list, dict)):
+                            j_data[key] = json.loads(val)
+
                     except (ValueError, SyntaxError, TypeError):
                         pass
 
@@ -335,49 +338,6 @@ class Request(SessionData):
 
         json_data = _dumps_json(json_data)
         return json_data
-
-    # @staticmethod
-    # def _post_json(post_data: str) -> dict:
-    #     """
-    #     解析json
-    #     """
-    #     json_data = json.loads(post_data)
-    #
-    #     def _dumps_json(j_data):
-    #
-    #         if isinstance(j_data, list):
-    #             """列表分支"""
-    #             for idx, data_ in enumerate(j_data):
-    #                 try:
-    #                     if isinstance(json.loads(data_), (list, dict)):
-    #                         data_ = json.loads(data_)
-    #
-    #                 except (ValueError, SyntaxError, TypeError):
-    #                     pass
-    #
-    #                 """判断是否需要递归"""
-    #                 if isinstance(data_, dict) or isinstance(data_, list):
-    #                     data_ = _dumps_json(data_)
-    #                 j_data[idx] = data_
-    #             return j_data
-    #
-    #         elif isinstance(j_data, dict):
-    #             """字典分支"""
-    #             for key, val in j_data.items():
-    #                 try:
-    #                     if isinstance(json.loads(val), (list, dict)):
-    #                         j_data[key] = json.loads(val)
-    #
-    #                 except (ValueError, SyntaxError, TypeError):
-    #                     pass
-    #
-    #                 """判断是否需要递归"""
-    #                 if isinstance(j_data[key], dict) or isinstance(j_data[key], list):
-    #                     j_data[key] = _dumps_json(j_data[key])
-    #             return j_data
-    #
-    #     json_data = _dumps_json(json_data)
-    #     return json_data
 
     @property
     def web_path(self) -> str:
@@ -606,7 +566,43 @@ class WSGIRequest(SessionData):
         """
         解析json
         """
-        return json.loads(post_data)
+        json_data = json.loads(post_data)
+
+        def _dumps_json(j_data):
+
+            if isinstance(j_data, list):
+                """列表分支"""
+                for idx, data_ in enumerate(j_data):
+                    try:
+                        if isinstance(json.loads(data_), (list, dict)):
+                            data_ = json.loads(data_)
+
+                    except (ValueError, SyntaxError, TypeError):
+                        pass
+
+                    """判断是否需要递归"""
+                    if isinstance(data_, dict) or isinstance(data_, list):
+                        data_ = _dumps_json(data_)
+                    j_data[idx] = data_
+                return j_data
+
+            elif isinstance(j_data, dict):
+                """字典分支"""
+                for key, val in j_data.items():
+                    try:
+                        if isinstance(json.loads(val), (list, dict)):
+                            j_data[key] = json.loads(val)
+
+                    except (ValueError, SyntaxError, TypeError):
+                        pass
+
+                    """判断是否需要递归"""
+                    if isinstance(j_data[key], dict) or isinstance(j_data[key], list):
+                        j_data[key] = _dumps_json(j_data[key])
+                return j_data
+
+        json_data = _dumps_json(json_data)
+        return json_data
 
     @property
     def content_type(self):
