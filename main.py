@@ -344,7 +344,7 @@ class Reloader:
         """
         while True:
             time.sleep(0.5)  # 每隔0.5秒检测一次、降低资源消耗。
-            for module in sys.modules.values():
+            for module in list(sys.modules.values()):
 
                 filename = getattr(module, '__file__', None)
                 if not (filename and os.path.isfile(filename)):

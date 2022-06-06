@@ -475,7 +475,7 @@ class WSGIRequest(SessionData):
             return self._GET
         else:
             query = self.environ.get('QUERY_STRING', '')
-            self._GET = {k: v for k, v in parse_qs(query).items()}
+            self._GET = {k: v[0] for k, v in parse_qs(query).items()}
             return self._GET
 
     @property
