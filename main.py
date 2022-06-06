@@ -107,7 +107,7 @@ class Mx(BaseMx):
 
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
-                       [(k, v) for k, v in response.request.headers.items() if k not in hop_by_hop])
+                       [(k, v or '') for k, v in response.request.headers.items() if k not in hop_by_hop])
         return [bytes(response.data, encoding='utf-8')]
 
     def preprocess_request(self):
@@ -125,7 +125,9 @@ class Mx(BaseMx):
         处理after request列表
         :param response: 响应
         """
-        response.request.headers['content-type'] = response.request.content_type
+
+        # 没有content-type时，设置默认的content-type
+        response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
 
