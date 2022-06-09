@@ -249,7 +249,13 @@ class TableDB(BaseDB):
             sql += ' where ' + ' and '.join(query_list) if query_list else ''
             count_sql += ' where ' + ' and '.join(query_list) if query_list else ''
 
-        if count:
+        if count and page_size:
+            limit_num2 = count - (page_index - 1) * page_size if count < page_index * page_size else page_size
+            if limit_num2 <= 0:  # 当要取的数据量 <= 0，直接返回空
+                return 0, []
+            else:
+                sql += ' limit ' + ','.join([str(max(0, (page_index - 1) * page_size)), str(limit_num2)])
+        elif count:
             sql += ' limit ' + ','.join([str(0), str(count)])
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
