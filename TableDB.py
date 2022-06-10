@@ -231,7 +231,7 @@ class TableDB(BaseDB):
                 assert len(value) != 0, '使用in时元组不能为空'
 
             elif symbol == 'between':
-                assert isinstance(value, list) and len(value) != 2, '查询格式错误！正确示例：a__between=[1, 3]'
+                assert isinstance(value, list) and len(value) == 2, '查询格式错误！正确示例：a__between=[1, 3]'
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
             query_list.append(
