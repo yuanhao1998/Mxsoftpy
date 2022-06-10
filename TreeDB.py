@@ -13,17 +13,17 @@ from .db_def.def_type import *
 from .db_def.def_tree import *
 
 symbol_map = {
-    'e': TRDB_FMC_EQUAL,                 # 等于
-    'ne': TRDB_FMC_UNEQUAL,              # 不等于
-    'gt': TRDB_FMC_GREATERTHAN,          # 大于
-    'lt': TRDB_FMC_LESSTHAN,             # 小于
+    'e': TRDB_FMC_EQUAL,  # 等于
+    'ne': TRDB_FMC_UNEQUAL,  # 不等于
+    'gt': TRDB_FMC_GREATERTHAN,  # 大于
+    'lt': TRDB_FMC_LESSTHAN,  # 小于
     'gte': TRDB_FMC_EQUALORGREATERTHAN,  # 大于等于
-    'lte': TRDB_FMC_EQUALORLESSTHAN,     # 小于等于
+    'lte': TRDB_FMC_EQUALORLESSTHAN,  # 小于等于
 
-    'like': TRDB_FMC_LIKE,               # 模糊匹配，使用 * 做为通配符
-    'nclike': TRDB_FMC_NOCASE_LIKE,      # 模糊匹配，不区分大小写
-    'in': TRDB_FMC_IN,                   # 范围查找（枚举）
-    'between': TRDB_FMC_RANGE            # 范围查找（范围）
+    'like': TRDB_FMC_LIKE,  # 模糊匹配，使用 * 做为通配符
+    'nclike': TRDB_FMC_NOCASE_LIKE,  # 模糊匹配，不区分大小写
+    'in': TRDB_FMC_IN,  # 范围查找（枚举）
+    'between': TRDB_FMC_RANGE  # 范围查找（范围）
 }
 
 
@@ -407,13 +407,18 @@ class TreeDB(BaseDB):
             elif symbol == 'like':
                 if isinstance(value, str):
                     expression_list.append(' %s ' % i)
+                    if len(temp['value']) >= 2:
+                        temp['value'] = temp['value'][0] + temp['value'][1:-1].replace('*', '\\*').replace('?', '\\*')\
+                                        + temp['value'][-1]
                     args.append(temp)
                     i += 1
                 elif isinstance(value, list):
                     assert len(value) != 0, '使用列表时不能为空列表'
                     j = 0
                     for v in value:
-                        temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'like', 'value': v}
+                        temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'like',
+                                'value': (v[0] + v[1:-1].replace('*', '\\*').replace('?', '\\*') + v[-1])
+                                if len(v) >= 2 else v}
                         args.append(temp)
                         if j == 0:
                             expression_temp = '(%s' % i
