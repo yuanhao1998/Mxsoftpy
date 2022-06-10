@@ -408,7 +408,7 @@ class TreeDB(BaseDB):
                 if isinstance(value, str):
                     expression_list.append(' %s ' % i)
                     if len(temp['value']) >= 2:
-                        temp['value'] = temp['value'][0] + temp['value'][1:-1].replace('*', '\\*').replace('?', '\\*')\
+                        temp['value'] = temp['value'][0] + temp['value'][1:-1].replace('*', '\\*').replace('?', '\\?')\
                                         + temp['value'][-1]
                     args.append(temp)
                     i += 1
@@ -417,7 +417,7 @@ class TreeDB(BaseDB):
                     j = 0
                     for v in value:
                         temp = {'key': key, 'value_type': type(v).__name__, 'symbol': 'like',
-                                'value': (v[0] + v[1:-1].replace('*', '\\*').replace('?', '\\*') + v[-1])
+                                'value': (v[0] + v[1:-1].replace('*', '\\*').replace('?', '\\?') + v[-1])
                                 if len(v) >= 2 else v}
                         args.append(temp)
                         if j == 0:
