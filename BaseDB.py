@@ -37,7 +37,7 @@ class BaseDB:
         return self._chl.GetConfHandle()
 
     @staticmethod
-    def return_value(res: tuple) -> Union[int, str, tuple, None]:
+    def return_value(res: tuple):
         """
         用于直接返回结果集的函数，处理其返回值
 
