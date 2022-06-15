@@ -108,7 +108,7 @@ class Mx(BaseMx):
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
                        [(k, v or '') for k, v in response.request.headers.items() if k not in hop_by_hop])
-        return [bytes(response.data, encoding='utf-8')]
+        return [bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data]
 
     def preprocess_request(self):
         """
