@@ -649,11 +649,14 @@ class Response:
         if kwargs.get('type') == 'default':
             self.data = self.package_data(data, self.request.callback)
         else:
-            try:
-                json.loads(data)
+            if isinstance(self.request, WSGIRequest):
                 self.data = data
-            except Exception:
-                self.data = json.dumps(data, ensure_ascii=False)
+            else:
+                try:
+                    json.loads(data)
+                    self.data = data
+                except Exception:
+                    self.data = json.dumps(data, ensure_ascii=False)
 
     @staticmethod
     def package_data(data: t.Any, callback: str) -> json:
