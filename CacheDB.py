@@ -72,6 +72,8 @@ class CacheDB(BaseDB):
         :param path_flag: 如果db不存在是否自动创建
         :return:
         """
+        if self._handle:
+            return self
 
         _host, _port = self._get_host_port(file)
         self.exec('bs_memdb_open', db or self._get_file(), TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
