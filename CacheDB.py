@@ -129,7 +129,7 @@ class CacheDB(BaseDB):
         self.exec_bs('bs_memdb_mget', keys, res)
         return res
 
-    def hset(self, name: str, key: str, value: Any, value_type=None) -> int:
+    def hset(self, name: str, key: str, value: Any, value_type=None, expire: int = -1) -> int:
         """
         设置一个Hash缓存
 
@@ -139,7 +139,7 @@ class CacheDB(BaseDB):
         :param value_type: 数据类型，不传字段获取
         """
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
-        return self.exec_bs('bs_memdb_hset', name, key, value, value_type)
+        return self.exec_bs('bs_memdb_hset', name, key, value, value_type, expire)
 
     def hget(self, name: str, key: str) -> Any:
         """
