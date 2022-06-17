@@ -210,16 +210,16 @@ class BaseDB:
     @staticmethod
     def _get_host_port2(key):
         # noinspection PyBroadException
-        # try:
-        #     from bsmiddle import DbServer_GetDataSource
-        #     host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
-        # except BaseException:
         try:
-            host = request().config.HOST
-            port = request().config.PORT
-        except (ModuleNotFoundError, ImportError, AttributeError):
-            host = '127.0.0.1'
-            port = 8123
+            from py_dbserver import DbServer_GetDataSource
+            host, port = DbServer_GetDataSource(request().company, key.split('_', 1)[0])
+        except BaseException:
+            try:
+                host = request().config.HOST
+                port = request().config.PORT
+            except (ModuleNotFoundError, ImportError, AttributeError):
+                host = '127.0.0.1'
+                port = 8123
         return host, port
 
     def _get_host_port(self, key: str) -> tuple:
