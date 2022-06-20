@@ -51,12 +51,13 @@ class BaseDB:
             frame = currentframe()
             logging.error('错误参数：%s' % str(frame.f_back.f_locals))
             max_depth = 100
-            while getattr(frame, 'f_back') and max_depth > 0:
+            while getattr(frame, 'f_back'):
                 frame = frame.f_back
                 logging.error('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
                 max_depth -= 1
-            else:
-                logging.error('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
+                if max_depth < 0:
+                    logging.error('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
+                    break
             raise DBError(msg)
         if res:
             return res[1] if len(res) == 2 else res[1:]
