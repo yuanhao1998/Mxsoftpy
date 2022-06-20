@@ -55,6 +55,8 @@ class BaseDB:
                 frame = frame.f_back
                 logging.error('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
                 max_depth -= 1
+            else:
+                logging.error('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
             raise DBError(msg)
         if res:
             return res[1] if len(res) == 2 else res[1:]
