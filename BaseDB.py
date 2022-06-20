@@ -2,7 +2,9 @@
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
+import logging
 from typing import Union, Any, List, Type
+from inspect import currentframe
 
 from superbsapi import *
 
@@ -46,6 +48,11 @@ class BaseDB:
         """
         msg = res[0] if isinstance(res, tuple) else res
         if msg != BS_NOERROR:
+            frame = currentframe()
+            logging.error('错误参数：%s' % str(frame.f_back.f_locals))
+            while getattr(frame, 'f_back'):
+                frame = frame.f_back
+                logging.error('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
             raise DBError(msg)
         if res:
             return res[1] if len(res) == 2 else res[1:]
