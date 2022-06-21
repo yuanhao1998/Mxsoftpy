@@ -31,6 +31,13 @@ class BaseDB:
         self.host, self.port = host, port
         self.__cls_value(self.host, self.port)
 
+    def __del__(self):
+        """
+        释放句柄
+        """
+        if self._handle:
+            bs_close_handle(self._handle)
+
     @property
     def handle(self):
         """
