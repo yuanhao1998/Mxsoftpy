@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Author : yh
 # @Time : 2020/11/5 16:18
 # @Remark: 存放Tree db数据库的操作方法，详情见TreeModel使用手册

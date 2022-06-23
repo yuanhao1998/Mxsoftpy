@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/26 9:47
 # @Author   : yh
 # @Remark   : http会话相关的公共方法

@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/6/29 14:06
 # @Author   : yh
 # @Remark   : mx框架Model层

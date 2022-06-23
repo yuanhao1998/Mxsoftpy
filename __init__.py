@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/27 14:08
 # @Author   : yh
 # @Remark   : 美信python框架

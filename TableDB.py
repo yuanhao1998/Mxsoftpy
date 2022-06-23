@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/9/13 9:12
 # @Author   : yh
 # @Remark   : 存放Table db数据库的操作方法

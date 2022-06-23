@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/8/3 15:14
 # @Author   : yh
 # @Remark   : 初始化加载

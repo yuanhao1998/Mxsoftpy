@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/17 9:47
 # @Author   : yh
 # @Remark   : 在此编写所有自定义异常类

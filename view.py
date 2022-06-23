@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/17 9:46
 # @Author   : yh
 # @Remark   : session处理类

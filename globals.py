@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/10/28 15:18
 # @Author   : yh
 # @Remark   : 全局变量

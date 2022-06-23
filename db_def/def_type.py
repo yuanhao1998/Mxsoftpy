@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/9/10 17:24
 # @Author   : yh
 # @Remark   : 所有的数据库类型

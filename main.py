@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/27 11:37
 # @Author   : yh
 # @Remark   : 主入口文件

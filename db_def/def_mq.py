@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/5/11 11:14 上午
 # @Author   : yh
 # @Remark   : 在此定义所有的消息队列操作方式

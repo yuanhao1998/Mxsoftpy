@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验

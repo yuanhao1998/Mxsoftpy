@@ -1,4 +1,4 @@
-# -*- coding: utf_8 -*-
+# -*- coding: UTF-8 -*-
 # @Create   : 2021/9/18 14:22
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
