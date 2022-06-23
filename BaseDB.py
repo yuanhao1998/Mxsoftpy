@@ -35,7 +35,7 @@ class BaseDB:
         """
         释放句柄
         """
-        if self._handle:
+        if getattr(self, '_handle', 0):
             bs_close_handle(self._handle)
 
     @property
