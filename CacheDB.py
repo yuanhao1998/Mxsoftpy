@@ -76,7 +76,7 @@ class CacheDB(BaseDB):
             return self
 
         _host, _port = self._get_host_port(file)
-        self.exec('bs_memdb_open', db or self._get_file(), TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+        self.exec1('bs_memdb_open', db or self._get_file(), TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
                   file, host or _host, port or _port)
 
         return self

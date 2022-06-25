@@ -37,7 +37,7 @@ class MQ(BaseDB):
             self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag)
         except (DBError, DataError):
             try:
-                self.exec('bs_mq_open', name, pwd, open_flag, flag, host, port)
+                self.exec1('bs_mq_open', name, pwd, open_flag, flag, host, port)
             except DBError as e:
                 raise DBError(e.err_code, '打开消息队列[%s]失败' % name)
 

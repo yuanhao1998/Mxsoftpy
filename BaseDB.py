@@ -107,7 +107,7 @@ class BaseDB:
         res = func(*args, **kwargs)
         return cls.return_value(res)
 
-    def exec(self, operate: str, *args, **kwargs):
+    def exec1(self, operate: str, *args, **kwargs):
         """
         用于执行直接连接的函数（不在CBSHandleLoc类中的连接函数）
 
