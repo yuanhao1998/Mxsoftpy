@@ -55,9 +55,9 @@ class BaseDB:
         """
         msg = res[0] if isinstance(res, tuple) else res
         if msg != BS_NOERROR:
-            if msg != 1:
-                frame = currentframe()
-                logging.error('错误参数：%s' % str(frame.f_back.f_locals))
+            frame = currentframe()
+            logging.error('错误参数：%s' % str(frame.f_back.f_locals))
+            if frame.f_back.f_locals.get('operate') != 'Treedb_ReopenMainKey':
                 max_depth = 100
                 while getattr(frame, 'f_back'):
                     frame = frame.f_back
