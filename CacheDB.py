@@ -151,7 +151,7 @@ class CacheDB(BaseDB):
         try:
             return self.exec_bs('bs_memdb_hget', name, key)
         except DBError as e:
-            if e.err_code == 28:  # 错误码28代表不存在此hash，此时返回None而不是报错
+            if e.err_code == 28 or e.err_code == 1000:  # 错误码28代表不存在此hash，此时返回None而不是报错
                 return None
             else:
                 raise DBError(e.err_code)
