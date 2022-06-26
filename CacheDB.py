@@ -153,6 +153,8 @@ class CacheDB(BaseDB):
         except DBError as e:
             if e.err_code == 28 or e.err_code == 1000:  # 错误码28代表不存在此hash，此时返回None而不是报错
                 return None
+            elif e.err_code == 40:  # 错误码40代表不存在此键，此时返回None而不是报错
+                return None
             else:
                 raise DBError(e.err_code)
 
