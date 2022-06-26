@@ -12,4 +12,5 @@ from .server import Server
 from .TreeDB import TreeDB
 from .TableDB import TableDB
 from .mqDB import MQ
+from .CacheDB import CacheDB
 from .DB import DB

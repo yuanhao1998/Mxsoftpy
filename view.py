@@ -449,7 +449,7 @@ class WSGIRequest(SessionData):
         else:
             cookie_dict = dict()
 
-            for cookie in self.environ.get('HTTP_COOKIE').split('; '):
+            for cookie in self.environ.get('HTTP_COOKIE', '').split('; '):
                 try:
                     k, v = cookie.split('=')
                 except ValueError:

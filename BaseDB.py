@@ -30,6 +30,10 @@ class BaseDB:
         self._handle = None
         self.host, self.port = host, port
         self.__cls_value(self.host, self.port)
+        self.open_func_dict = {
+            'Treedb_Alloc': 1, 'Treedb_ReopenMainKey': 1, 'Treedb_ReopenSubKey': 1, 'Tabledb_Alloc': 1,
+            'Tabledb_ReopenDb': 1, 'bs_mq_open': 1, 'bs_mq_reopen': 1, 'bs_memdb_open': 1
+        }
 
     def __del__(self):
         """
@@ -45,8 +49,7 @@ class BaseDB:
         """
         return self._chl.GetConfHandle()
 
-    @staticmethod
-    def return_value(res: tuple):
+    def return_value(self, res: tuple):
         """
         用于直接返回结果集的函数，处理其返回值
 
@@ -56,7 +59,7 @@ class BaseDB:
         msg = res[0] if isinstance(res, tuple) else res
         if msg != BS_NOERROR:
             frame = currentframe()
-            if frame.f_back.f_locals.get('operate') not in ['Treedb_ReopenMainKey', 'Treedb_Alloc']:
+            if not self.open_func_dict.get(frame.f_back.f_locals.get('operate')):
                 logging.error('错误参数：%s' % str(frame.f_back.f_locals))
                 max_depth = 100
                 while getattr(frame, 'f_back'):
