@@ -49,7 +49,7 @@ class BaseDB:
         """
         return self._chl.GetConfHandle()
 
-    def return_value(self, res: tuple):
+    def return_value(self, res=0):
         """
         用于直接返回结果集的函数，处理其返回值
 
