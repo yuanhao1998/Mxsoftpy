@@ -76,8 +76,9 @@ class CacheDB(BaseDB):
             return self
 
         _host, _port = self._get_host_port(file)
-        self.exec1('bs_memdb_open', db or self._get_file(), TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
-                  file, host or _host, port or _port)
+        self.exec1('bs_memdb_open', db or self._get_file(),
+                   TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+                   file, host or _host, port or _port)
 
         return self
 
@@ -111,13 +112,14 @@ class CacheDB(BaseDB):
         """
         return self.exec_bs('bs_memdb_delete_key', key)
 
-    def mset(self, items: Union[List[tuple], dict, Model]) -> int:
+    def mset(self, items: Union[List[tuple], dict, Model], expire: int = -1) -> int:
         """
         批量插入String类型的数据
 
         :param items: 插入的数据
+        :param expire: 过期时间，默认永不过期
         """
-        return self.exec_bs('bs_memdb_mset', self._generation_items(items)) if items else 0
+        return self.exec_bs('bs_memdb_mset', self._generation_items(items), expire) if items else 0
 
     def mget(self, keys: List[str]) -> dict:
         """
