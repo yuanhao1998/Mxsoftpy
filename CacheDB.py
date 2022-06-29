@@ -14,7 +14,7 @@ from mxsoftpy.exception import DBError
 
 class CacheDB(BaseDB):
 
-    def return_value(self, res: tuple) -> Union[int, str, tuple, None]:
+    def return_value(self, res=0) -> Union[int, str, tuple, None]:
         """
         用于直接返回结果集的函数，处理其返回值
 
@@ -139,6 +139,7 @@ class CacheDB(BaseDB):
         :param key: key
         :param value: value
         :param value_type: 数据类型，不传字段获取
+        :param expire: 过期时间
         """
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
         return self.exec_bs('bs_memdb_hset', name, key, value, value_type, expire)
