@@ -7,8 +7,8 @@ def request():
     """
     session处理实例
     """
-    from .main import session_handler
-    return session_handler
+    from .main import local_val
+    return local_val.session_handler
 
 
 def config():

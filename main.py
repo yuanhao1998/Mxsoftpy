@@ -13,7 +13,6 @@ import traceback
 import typing as t
 
 from pydantic import ValidationError
-# from viztracer import VizTracer
 
 from .HTTPMethod import send_response, add_response
 from .base import BaseMx
@@ -24,7 +23,7 @@ from .view import Request, Response, WSGIRequest
 if t.TYPE_CHECKING:
     from .module import Module
 
-session_handler: WSGIRequest  # session处理类，用于globals文件中全局导入request
+local_val = threading.local()  # 全局ThreadLocal对象
 
 
 class Mx(BaseMx):
@@ -67,10 +66,7 @@ class Mx(BaseMx):
         self.session_handler = Request(session)
         self.session_handler.module_list = self.module_list
 
-        global session_handler
-        session_handler = self.session_handler
-        # a = VizTracer(log_func_args=True, log_func_retval=True, max_stack_depth=10)
-        # a.start()
+        local_val.session_handler = self.session_handler
         try:
             rv = self.preprocess_request()
             if rv is None:
@@ -78,8 +74,6 @@ class Mx(BaseMx):
 
         except Exception as e:
             rv = self.handle_user_exception(e)
-        # a.stop()
-        # a.save(r'\\Mac\Home\Desktop\result.json')
 
         response = self.process_response(rv)
         send_response(add_response(response))
@@ -94,8 +88,7 @@ class Mx(BaseMx):
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
 
-        global session_handler
-        session_handler = self.session_handler
+        local_val.session_handler = self.session_handler
 
         try:
             rv = self.preprocess_request()
@@ -219,7 +212,7 @@ class Mx(BaseMx):
         elif isinstance(e, ValidationError):
             return self.validation_error_handler()
         else:
-            log_path = os.path.join(__file__.split('Server')[0], "Server",'middle', 'Pymod',
+            log_path = os.path.join(__file__.split('Server')[0], "Server", 'middle', 'Pymod',
                                     datetime.date.today().strftime('%Y%m%d') + 'error.log')
             path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/middle/Pymod/'
             if not os.path.exists(path):
@@ -254,7 +247,7 @@ class Mx(BaseMx):
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)
         else:
-            self.load_cache()
+            # self.load_cache()
             serve(self, listen=listen, **kwargs)
 
     def run_with_reloader(self, main_func, **kwargs):
