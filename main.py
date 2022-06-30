@@ -247,7 +247,7 @@ class Mx(BaseMx):
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)
         else:
-            # self.load_cache()
+            self.load_cache()
             serve(self, listen=listen, **kwargs)
 
     def run_with_reloader(self, main_func, **kwargs):
