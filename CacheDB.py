@@ -110,7 +110,13 @@ class CacheDB(BaseDB):
 
         :param key: 要删除的key
         """
-        return self.exec_bs('bs_memdb_delete_key', key)
+        try:
+            return self.exec_bs('bs_memdb_delete_key', key)
+        except DBError as e:
+            if e.err_code == 176:
+                pass
+            else:
+                raise e
 
     def mset(self, items: Union[List[tuple], dict, Model], expire: int = -1) -> int:
         """
@@ -188,7 +194,13 @@ class CacheDB(BaseDB):
         :param name: hash名称
         :param key: key
         """
-        return self.exec_bs('bs_memdb_delete_hkey', name, key)
+        try:
+            return self.exec_bs('bs_memdb_delete_hkey', name, key)
+        except DBError as e:
+            if e.err_code == 176:
+                pass
+            else:
+                raise e
 
     def hmdel_key(self, name: str, keys: List[str]) -> int:
         """
@@ -197,7 +209,13 @@ class CacheDB(BaseDB):
         :param name: Hash名称
         :param keys: key
         """
-        return self.exec_bs('bs_memdb_delete_hmkey', name, keys)
+        try:
+            return self.exec_bs('bs_memdb_delete_hmkey', name, keys)
+        except DBError as e:
+            if e.err_code == 176:
+                pass
+            else:
+                raise e
 
     def hdel(self, name: str) -> int:
         """
@@ -205,4 +223,10 @@ class CacheDB(BaseDB):
         
         :param name: hash名称
         """
-        return self.exec_bs('bs_memdb_delete_hash', name)
+        try:
+            return self.exec_bs('bs_memdb_delete_hash', name)
+        except DBError as e:
+            if e.err_code == 176:
+                pass
+            else:
+                raise e
