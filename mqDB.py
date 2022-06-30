@@ -2,6 +2,8 @@
 # @Create   : 2021/9/18 14:22
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
+import multiprocessing
+
 from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
 from .db_def.def_type import type_map
@@ -80,13 +82,10 @@ class MQ(BaseDB):
         :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
         :return: 取到的数据类
         """
-        try:
-            res = self.exec_handle('bs_mq_pop', -1 if time_out == 999999 else time_out * 1000, is_peek)
-        except DBError as e:
-            if e.err_code == 131:
-                res = (None, None, None, None, None)
-            else:
-                raise DBError(e.err_code, e.msg)
+        queue = multiprocessing.Queue()
+        process = multiprocessing.Process(target=self.pop_data, args=(queue, time_out, is_peek))
+        process.start()
+        process.join()
 
         class Data:
             def __init__(self, data: tuple):
@@ -97,7 +96,39 @@ class MQ(BaseDB):
             def __str__(self):
                 return str({'data': self.data, 'label': self.label, 'time': self.time})
 
-        return Data(res)
+        err_code = queue.get()
+        err_msg = queue.get()
+        res = queue.get()
+
+        if err_code == 0:
+            return Data(res)
+        else:
+            raise DBError(err_code, err_msg)
+
+    def pop_data(self, queue: multiprocessing.Queue, time_out: int = 0, is_peek: bool = False):
+        """
+        从消息队列中取出一条数据
+        :param queue: 通信队列
+        :param time_out: 如果队列为空，此变量可设置等待时间，如果设置999999则认为无限等待
+        :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
+        :return: 取到的数据类
+        """
+        try:
+            res = self.exec_handle('bs_mq_pop', -1 if time_out == 999999 else time_out * 1000, is_peek)
+            err_code = 0
+            err_msg = ""
+        except DBError as e:
+            if e.err_code == 131:
+                err_code = 0
+                err_msg = ""
+                res = (None, None, None, None, None)
+            else:
+                err_code = e.err_code
+                err_msg = e.msg
+                res = (None, None, None, None, None)
+        queue.put(err_code)
+        queue.put(err_msg)
+        queue.put(res)
 
     def length(self):
         """
