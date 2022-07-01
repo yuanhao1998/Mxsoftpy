@@ -451,7 +451,7 @@ class WSGIRequest(SessionData):
 
             for cookie in self.environ.get('HTTP_COOKIE', '').split('; '):
                 try:
-                    k, v = cookie.split('=')
+                    k, v = cookie.split('=', 1)
                 except ValueError:
                     raise AuthError('没有cookie')
                 cookie_dict[k] = v

@@ -123,7 +123,7 @@ class Mx(BaseMx):
         response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-
+        response.request.headers["Content-Length"] = str(len(bytes(response.data, encoding='utf-8')))
         return response
 
     def run_func(self) -> Response:
@@ -247,7 +247,7 @@ class Mx(BaseMx):
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)
         else:
-            self.load_cache()
+            # self.load_cache()
             serve(self, listen=listen, **kwargs)
 
     def run_with_reloader(self, main_func, **kwargs):
