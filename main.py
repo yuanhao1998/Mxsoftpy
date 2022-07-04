@@ -226,7 +226,9 @@ class Mx(BaseMx):
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
         if environ and start_response:
+            local_val.model = 'wsgi'  # 绑定此请求模式，mx模式或者wsgi模式
             return self.full_dispatch_wsgi_request(environ, start_response)
+        local_val.model = 'mx'
         self.full_dispatch_request(session)
 
     @staticmethod
@@ -247,7 +249,7 @@ class Mx(BaseMx):
         if reload:
             self.run_with_reloader(serve, listen=listen, **kwargs)
         else:
-            # self.load_cache()
+            self.load_cache()
             serve(self, listen=listen, **kwargs)
 
     def run_with_reloader(self, main_func, **kwargs):

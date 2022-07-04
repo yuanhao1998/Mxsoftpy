@@ -5,9 +5,19 @@
 from mxsoftpy.exception import CError
 
 from .def_http_code import HttpCode, WeMr
+from .view import Response
 
 
-def redirect(session, url: str, params: dict):
+def redirect(*args, **kwargs):
+    from .main import local_val
+
+    if local_val.model == 'wsgi':
+        return redirect_wsgi(*args, **kwargs)
+    else:
+        return redirect_mx(*args, **kwargs)
+
+
+def redirect_mx(session, url: str, params: dict = None):
     """
     重定向
     :param session: http会话
@@ -15,12 +25,7 @@ def redirect(session, url: str, params: dict):
     :param params: 参数字典
     :return:
     """
-    query = list()
-
-    for k, v in params.items():
-        query.append(k + "=" + v)
-    if len(query) > 0:
-        url = url + "?" + "&".join(query)
+    url = url + '?' + '&'.join([k + "=" + v for k, v in params.items()])if params else url
 
     headers = session.GetHttpResponseHead()
     headers.SetStatus(HttpCode.st_302_found)
@@ -30,6 +35,23 @@ def redirect(session, url: str, params: dict):
     headers.SetContentLength(0)
     session.SendHeader()
     session.SendData("")
+
+
+def redirect_wsgi(url: str, params: dict = None, status_code=302):
+    """
+    重定向
+    :param request: 请求
+    :param url: 要重定向的url
+    :param params: 参数字典
+    :param status_code: 重定向状态码，默认302
+    """
+    url = url + '?' + '&'.join([k + "=" + v for k, v in params.items()])if params else url
+
+    response = Response('')
+
+    response.request.status_code = status_code
+    response.request.headers['Location'] = url
+    return response
 
 
 def add_response(response):
