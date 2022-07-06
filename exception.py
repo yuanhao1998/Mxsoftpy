@@ -101,6 +101,16 @@ class HTTPMethodError(MxBaseException):
         return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '错误的请求方法'}, ensure_ascii=False)
 
 
+class RPCConnError(MxBaseException):
+    """
+    云智慧RPC连接异常
+    """
+
+    def __str__(self):
+
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '云智慧RPC连接异常'}, ensure_ascii=False)
+
+
 class FileError(MxBaseException):
     """
     文件异常

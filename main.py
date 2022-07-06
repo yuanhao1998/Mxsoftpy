@@ -14,11 +14,10 @@ import typing as t
 
 from pydantic import ValidationError
 
-from .HTTPMethod import send_response, add_response
 from .base import BaseMx
 from .def_http_code import hop_by_hop
 from .exception import NotFoundError, MxBaseException
-from .view import Request, Response, WSGIRequest
+from .view import Request, Response
 
 if t.TYPE_CHECKING:
     from .module import Module
@@ -59,32 +58,13 @@ class Mx(BaseMx):
         for k, v in module.url_map.items():
             self.url_map[k] = v
 
-    def full_dispatch_request(self, session):
-        """
-        处理请求
-        """
-        self.session_handler = Request(session)
-        self.session_handler.module_list = self.module_list
-
-        local_val.session_handler = self.session_handler
-        try:
-            rv = self.preprocess_request()
-            if rv is None:
-                rv = self.run_func()
-
-        except Exception as e:
-            rv = self.handle_user_exception(e)
-
-        response = self.process_response(rv)
-        send_response(add_response(response))
-
-    def full_dispatch_wsgi_request(self, environ, start_response):
+    def full_dispatch_request(self, environ, start_response):
         """
         处理wsgi服务器的请求
         :param environ: 请求信息
         :param start_response: 响应函数
         """
-        self.session_handler = WSGIRequest(environ)
+        self.session_handler = Request(environ)
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
 
@@ -96,7 +76,7 @@ class Mx(BaseMx):
                 rv = self.run_func()
 
         except Exception as e:
-            rv = self.handle_wsgi_user_exception(e)
+            rv = self.handle_user_exception(e)
 
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
@@ -150,34 +130,9 @@ class Mx(BaseMx):
         url = '/' + url if not url.startswith('/') else url
         return self.url_map.get(url)
 
-    def handle_user_exception(self, e):
-        """
-        全局异常处理
-        :param e: 获取到到异常
-        """
-        if isinstance(e, MxBaseException):
-            return self.mx_base_exception_handler()
-        elif isinstance(e, ValidationError):
-            return self.validation_error_handler()
-        else:
-            raise e
-
     def mx_base_exception_handler(self) -> Response:
         """
         对捕获到的MxBaseException进行处理
-        """
-        error_type, error_value, error_traceback = sys.exc_info()
-
-        error = error_type(error_value)
-        self.session_handler.session.GetHttpResponseHead().SetStatus(error.state_code)
-
-        return Response('%s(%s)' % (
-            self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
-            error_value), self.session_handler)
-
-    def wsgi_mx_base_exception_handler(self) -> Response:
-        """
-        对捕获到的MxBaseException进行处理、适用于wsgi模式
         """
         error_type, error_value, error_traceback = sys.exc_info()
 
@@ -203,12 +158,12 @@ class Mx(BaseMx):
         return Response('%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error,
                         self.session_handler)
 
-    def handle_wsgi_user_exception(self, e):
+    def handle_user_exception(self, e):
         """
         处理wsgi的异常
         """
         if isinstance(e, MxBaseException):
-            return self.wsgi_mx_base_exception_handler()
+            return self.mx_base_exception_handler()
         elif isinstance(e, ValidationError):
             return self.validation_error_handler()
         else:
@@ -220,16 +175,12 @@ class Mx(BaseMx):
             traceback.print_exc(file=open(log_path, 'a+'))
             raise e
 
-    def __call__(self, environ=None, start_response=None, session=None):
+    def __call__(self, environ=None, start_response=None):
         """
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        if environ and start_response:
-            local_val.model = 'wsgi'  # 绑定此请求模式，mx模式或者wsgi模式
-            return self.full_dispatch_wsgi_request(environ, start_response)
-        local_val.model = 'mx'
-        self.full_dispatch_request(session)
+        return self.full_dispatch_request(environ, start_response)
 
     @staticmethod
     def load_cache():
