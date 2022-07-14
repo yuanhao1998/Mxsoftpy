@@ -129,3 +129,13 @@ class AuthError(MxBaseException):
     def __str__(self):
 
         return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': '权限错误'}, ensure_ascii=False)
+
+
+class LicenseError(MxBaseException):
+    """
+    license异常
+    """
+
+    def __str__(self):
+
+        return json.dumps({'status': 'failed', 'errmsg': self.msg, 'err_type': 'license异常'}, ensure_ascii=False)

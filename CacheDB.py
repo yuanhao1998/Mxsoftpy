@@ -96,13 +96,22 @@ class CacheDB(BaseDB):
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
         return self.exec_bs('bs_memdb_set', key, value, value_type, expire, create, update)
 
-    def get(self, key: str) -> str:
+    def get(self, key: str) -> Any:
         """
         取一个String数据的值
 
         :param key: 要获取的key
         """
-        return self.exec_bs('bs_memdb_get', key)
+
+        try:
+            return self.exec_bs('bs_memdb_get', key)
+        except DBError as e:
+            if e.err_code == 28 or e.err_code == 1000:  # 错误码28代表不存在此hash，此时返回None而不是报错
+                return None
+            elif e.err_code == 40:  # 错误码40代表不存在此键，此时返回None而不是报错
+                return None
+            else:
+                raise DBError(e.err_code)
 
     def delete(self, key: str) -> int:
         """
