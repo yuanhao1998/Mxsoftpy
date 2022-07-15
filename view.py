@@ -32,9 +32,9 @@ class SessionData:
         """
         获取session id
         """
-        if not self.cookie.get('mxsessionid'):
+        if not self.cookie.get('mxsessionid') and request().config.version == 0:
             raise AuthError('获取session失败，请重新登录')
-        return self.cookie.get('mxsessionid')
+        return self.cookie.get('mxsessionid', '')
 
     @property
     def company(self) -> str:
@@ -44,14 +44,17 @@ class SessionData:
         if self._company:
             return self._company
         else:
-            from py_opm_wm_bm import GetSessionCompany
-            flag, company = GetSessionCompany(self.session_id)
-            if flag == 0 or flag is True:
-                self._company = company
-                return self._company
+            if request().config.version == 0:
+                from py_opm_wm_bm import GetSessionCompany
+                flag, company = GetSessionCompany(self.session_id)
+                if flag == 0 or flag is True:
+                    self._company = company
+                    return self._company
+                else:
+                    logging.error('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+                    raise AuthError('session异常, 获取公司失败')
             else:
-                logging.error('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
-                raise AuthError('session异常, 获取公司失败')
+                return 'Co_1'
 
     @property
     def user(self) -> str:
@@ -61,14 +64,17 @@ class SessionData:
         if self._user:
             return self._user
         else:
-            from py_opm_wm_bm import GetSessionUserId
-            flag, user = GetSessionUserId(self.session_id)
-            if flag == 0 or flag is True:
-                self._user = user
-                return self._user
+            if request().config.version == 0:
+                from py_opm_wm_bm import GetSessionUserId
+                flag, user = GetSessionUserId(self.session_id)
+                if flag == 0 or flag is True:
+                    self._user = user
+                    return self._user
+                else:
+                    logging.error('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+                    raise AuthError('session异常, 获取用户失败')
             else:
-                logging.error('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
-                raise AuthError('session异常, 获取用户失败')
+                return request().headers.get('userid', '')
 
     @property
     def user_group(self) -> str:
@@ -78,14 +84,17 @@ class SessionData:
         if self._user_group:
             return self._user_group
         else:
-            from py_opm_wm_bm import GetSessionUserGroupId
-            flag, user_group = GetSessionUserGroupId(self.session_id)
-            if flag == 0 or flag is True:
-                self._user_group = user_group
-                return self._user_group
+            if request().config.version == 0:
+                from py_opm_wm_bm import GetSessionUserGroupId
+                flag, user_group = GetSessionUserGroupId(self.session_id)
+                if flag == 0 or flag is True:
+                    self._user_group = user_group
+                    return self._user_group
+                else:
+                    logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败' % flag)
+                    raise AuthError('session异常, 获取用户组失败')
             else:
-                logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败' % flag)
-                raise AuthError('session异常, 获取用户组失败')
+                return ''
 
 
 class Request(SessionData):
