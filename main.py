@@ -103,7 +103,7 @@ class Mx(BaseMx):
         response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-        response.request.headers["Content-Length"] = str(len(bytes(response.data, encoding='utf-8')))
+        response.request.headers["Content-Length"] = str(len(bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
         return response
 
     def run_func(self) -> Response:

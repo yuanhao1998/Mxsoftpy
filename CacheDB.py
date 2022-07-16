@@ -8,28 +8,34 @@ from mxsoftpy import Model
 from mxsoftpy.db_def.db_error import BS_NOERROR
 from mxsoftpy.db_def.def_tree import *
 from mxsoftpy.db_def.def_type import type_map
-from mxsoftpy.BaseDB import BaseDB
+from mxsoftpy.BaseDB import BaseDB, handle_pool
 from mxsoftpy.exception import DBError
 
 
 class CacheDB(BaseDB):
 
-    def return_value(self, res=0) -> Union[int, str, tuple, None]:
+    def __init__(self):
+        super().__init__()
+        self._handle_args = None
+
+    def return_value(self, index: int, res=0) -> Union[int, str, tuple, None]:
         """
         用于直接返回结果集的函数，处理其返回值
 
+        :param index: handle的索引值
         :param res: 错误信息及函数返回的数据
         :return: 返回信息
         """
 
         if isinstance(res, tuple):
             if len(res) == 2:
-                res, self._handle = res
+                res, handle = res
                 data = None
             elif len(res) == 3:
-                res, self._handle, data = res
+                res, handle, data = res
             else:
-                res, self._handle, data = res[0], res[1], res[2:]
+                res, handle, data = res[0], res[1], res[2:]
+            handle_pool.all_handle[self._handle_args][index]['handle'] = handle
         else:
             data = None
 
@@ -43,8 +49,10 @@ class CacheDB(BaseDB):
         执行bs函数
         """
 
-        res = eval(operate)(self._handle, *args, **kwargs)
-        return self.return_value(res)
+        handle, lock, index = handle_pool.get_mem_handle(self._handle_args)
+        with lock:
+            res = eval(operate)(handle, *args, **kwargs)
+            return self.return_value(index, res)
 
     def insert_file(self, file_name: str, config_name: str = 'memdb.ini', host: str = None, port: int = None) -> int:
         """
@@ -72,13 +80,13 @@ class CacheDB(BaseDB):
         :param path_flag: 如果db不存在是否自动创建
         :return:
         """
-        if self._handle:
-            return self
 
         _host, _port = self._get_host_port(file)
-        self.exec1('bs_memdb_open', db or self._get_file(),
-                   TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
-                   file, host or _host, port or _port)
+        self._handle_args = (
+            (db or self._get_file(),
+             TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+             file, host or _host, port or _port)
+        )
 
         return self
 
