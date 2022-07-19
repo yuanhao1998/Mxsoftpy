@@ -22,6 +22,7 @@ class SessionData:
         self._user = None
         self._user_id = None
         self._user_group = None
+        self._role = None
 
     @property
     def cookie(self) -> dict:
@@ -95,6 +96,25 @@ class SessionData:
                     raise AuthError('session异常, 获取用户组失败')
             else:
                 return ''
+
+    @property
+    def account(self) -> str:
+        """
+        获取登陆租户
+        """
+        return request().headers.get('accountid')
+
+    @property
+    def role(self) -> list:
+        """
+        获取登陆角色
+        """
+        if self._role:
+            return self._role
+        else:
+            from db.customer.Cloudwise.user import DubboUser
+            self._role = [i['roleId'] for i in DubboUser().role_info()]
+            return self._role
 
 
 class Request(SessionData):
