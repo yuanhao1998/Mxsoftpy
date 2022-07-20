@@ -23,6 +23,7 @@ class SessionData:
         self._user_id = None
         self._user_group = None
         self._role = None
+        self._is_admin = None
 
     @property
     def cookie(self) -> dict:
@@ -115,6 +116,18 @@ class SessionData:
             from db.customer.Cloudwise.user import DubboUser
             self._role = [i['roleId'] for i in DubboUser().role_info()]
             return self._role
+
+    @property
+    def is_admin(self) -> bool:
+        """
+        检查当前登陆用户是否为管理员
+        """
+        if isinstance(self._is_admin, tuple):
+            return self._is_admin[1]
+        else:
+            from db.customer.Cloudwise.user import DubboUser
+            self._role = (1, DubboUser().check_admin())
+            return self._role[1]
 
 
 class Request(SessionData):
