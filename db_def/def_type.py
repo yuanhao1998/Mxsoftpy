@@ -14,6 +14,7 @@ VDT_TIME = 0x09
 VDT_UI8 = 0x10
 VDT_UI64 = 0x13
 VDT_TIMESTR = 0x30
+VDT_BIN = 0x08
 
 double = type('double', (int, ), {})
 int8 = type('int8', (int, ), {})
@@ -36,6 +37,7 @@ type_map = {
     'time': VDT_TIME,
     'timestr': VDT_TIMESTR,
     'empty': VDT_EMPTY,
+    'bytes': VDT_BIN,
 
     'ConstrainedIntValue': VDT_I32,
     'ConstrainedFloatValue': VDT_FLOAT,
