@@ -91,12 +91,13 @@ class SessionData:
                 flag, user_group = GetSessionUserGroupId(self.session_id)
                 if flag == 0 or flag is True:
                     self._user_group = user_group
-                    return self._user_group
                 else:
                     logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败' % flag)
                     raise AuthError('session异常, 获取用户组失败')
             else:
-                return ''
+                self._user_group = ''
+
+            return self._user_group
 
     @property
     def account(self) -> str:
