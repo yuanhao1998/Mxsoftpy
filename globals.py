@@ -2,8 +2,13 @@
 # @Create   : 2021/10/28 15:18
 # @Author   : yh
 # @Remark   : 全局变量
+import typing
 
-def request():
+if typing.TYPE_CHECKING:
+    from .view import Request
+
+
+def request() -> "Request":
     """
     session处理实例
     """
