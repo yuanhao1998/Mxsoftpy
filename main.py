@@ -58,32 +58,35 @@ class Mx(BaseMx):
         for k, v in module.url_map.items():
             self.url_map[k] = v
 
-    def full_dispatch_request(self, environ, start_response):
+    async def full_dispatch_request(self, scope, receive, send):
         """
-        处理wsgi服务器的请求
-        :param environ: 请求信息
-        :param start_response: 响应函数
+        处理asgi服务器的请求
         """
-        self.session_handler = Request(environ)
+        self.session_handler = Request(scope, receive, send)
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
 
         local_val.session_handler = self.session_handler
 
         try:
-            rv = self.preprocess_request()
+            rv = await self.preprocess_request()
             if rv is None:
-                rv = self.run_func()
+                rv = await self.run_func()
 
         except Exception as e:
             rv = self.handle_user_exception(e)
 
-        response = self.process_response(rv)
-        start_response(str(response.request.status_code),
-                       [(k, v or '') for k, v in response.request.headers.items() if k not in hop_by_hop])
-        return [bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data]
+        response = await self.process_response(rv)
+        await send(
+            {
+                "type": "http.response.start",
+                "status": response.request.status_code,
+                "headers": [(k.encode(), v.encode()) for k, v in response.request.headers.items()],
+            }
+        )
+        await send({"type": "http.response.body", "body": bytes(response.data, encoding='utf-8')})
 
-    def preprocess_request(self):
+    async def preprocess_request(self):
         """
         处理before request列表
         """
@@ -93,7 +96,7 @@ class Mx(BaseMx):
                 return rv
         return None
 
-    def process_response(self, response: Response) -> Response:
+    async def process_response(self, response: Response) -> Response:
         """
         处理after request列表
         :param response: 响应
@@ -103,18 +106,18 @@ class Mx(BaseMx):
         response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-        response.request.headers["Content-Length"] = str(len(bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
+        response.request.headers["content-length"] = str(len(bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
         return response
 
-    def run_func(self) -> Response:
+    async def run_func(self) -> Response:
         """
         运行url对应的函数、异常处理
         """
         func = self.get_func()
 
         if func:
-            rv = func(self.session_handler)
-            return rv[0] if isinstance(rv[0], Response) else Response(*rv, type='default')
+            rv = await func(self.session_handler)
+            return rv if isinstance(rv, Response) else Response(rv, type='default')
         else:
             raise NotFoundError(self.session_handler.url)
 
@@ -175,12 +178,12 @@ class Mx(BaseMx):
             traceback.print_exc(file=open(log_path, 'a+'))
             raise e
 
-    def __call__(self, environ=None, start_response=None):
+    async def __call__(self, scope, receive, send):
         """
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        return self.full_dispatch_request(environ, start_response)
+        await self.full_dispatch_request(scope, receive, send)
 
     @staticmethod
     def load_cache():

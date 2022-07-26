@@ -136,18 +136,21 @@ class Request(SessionData):
     解析来来自WSGI Server的请求参数
     """
 
-    def __init__(self, environ: dict, *args, **kwargs):
+    def __init__(self, scope, receive, send):
         super().__init__()
-        self.environ = environ
+        self._stream_consumed = False  # 判断String流是否被读取
+        self.scope = scope
+        self.receive = receive
+        self.send = send
         self.status_code = HttpCode.st_200_ok  # 默认的响应码
         self.response_content_type = 'application/json; charset=utf-8'  # 默认的response类型
         self.module_list = None  # 所有模块列表
         self.config = None  # 配置文件
 
-        self.url = self.environ.get('PATH_INFO', '').split('?')[0]  # 请求的url
-        self.peer_ip = self.environ.get('REMOTE_ADDR', '')
-        self.request_type = self.environ.get('REQUEST_METHOD', 'GET')
-        self._content_type = self.environ.get('CONTENT_TYPE', '')
+        self.url = self.scope.get('path', '').split('?')[0]  # 请求的url
+        self.peer_ip = self.scope.get('server', ('', 0))[0]
+        self.request_type = self.scope.get('method', 'GET')
+        self._content_type = None
         self._headers = None
         self._cookie = None
         self._GET = None
@@ -162,9 +165,8 @@ class Request(SessionData):
             return self._headers
         else:
             self._headers = {}
-            for k, v in self.environ.items():
-                if k.startswith('HTTP_'):
-                    self._headers[k[5:].lower()] = v
+            for i in self.scope.get('headers', []):
+                self._headers[i[0].decode().lower()] = i[1].decode()
             return self._headers
 
     @property
@@ -177,7 +179,7 @@ class Request(SessionData):
         else:
             cookie_dict = dict()
 
-            for cookie in self.environ.get('HTTP_COOKIE', '').split('; '):
+            for cookie in self.headers.get('cookie', '').split('; '):
                 try:
                     k, v = cookie.split('=', 1)
                 except ValueError:
@@ -202,12 +204,32 @@ class Request(SessionData):
         if self._GET:
             return self._GET
         else:
-            query = self.environ.get('QUERY_STRING', '')
+            query = self.scope.get('query_string', b'').decode()
             self._GET = {k: v[0] for k, v in parse_qs(query).items()}
             return self._GET
 
+    async def stream(self):
+        if hasattr(self, "_body"):
+            yield self._body
+            yield b""
+            return
+
+        if self._stream_consumed:
+            raise RuntimeError("IO流已被使用")
+
+        self._stream_consumed = True
+        while True:
+            message = await self.receive()
+            if message["type"] == "http.request":
+                body = message.get("body", b"")
+                if body:
+                    yield body
+                if not message.get("more_body", False):
+                    break
+        yield b""
+
     @property
-    def POST(self) -> t.Any:
+    async def POST(self) -> t.Any:
         """
         获取post方法传递的参数
         """
@@ -218,12 +240,13 @@ class Request(SessionData):
                 'application/x-www-form-urlencoded': self._post_x_www_form_urlencoded,
                 'application/json': self._post_json
             }
-            post_length = self.environ.get('CONTENT_LENGTH')
-            post_data = self.environ.get('wsgi.input').read(int(post_length)).decode('utf-8')
+            chunks = []
+            async for chunk in self.stream():
+                chunks.append(chunk)
             try:
                 data = parse_dict.get(
                     self.content_type.split(';')[0] if self.content_type else 'application/x-www-form-urlencoded')(
-                    post_data)
+                    b"".join(chunks).decode())
             except TypeError:
                 raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
             self._POST = data
@@ -416,4 +439,4 @@ class View:
 
         if not meth:
             raise HTTPMethodError(self.request.request_type)
-        return meth(), self.request
+        return meth()
