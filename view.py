@@ -9,8 +9,6 @@ import os
 import typing as t
 from urllib.parse import parse_qs
 
-from asyncer import syncify, asyncify
-
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request
