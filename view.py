@@ -7,6 +7,7 @@ import logging
 import json
 import os
 import typing as t
+from asyncio import iscoroutinefunction
 from urllib.parse import parse_qs
 
 from .def_http_code import HttpCode
@@ -455,4 +456,4 @@ class View:
 
         if not meth:
             raise HTTPMethodError(self.request.request_type)
-        return meth()
+        return await meth() if iscoroutinefunction(meth) else meth()
