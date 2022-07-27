@@ -9,6 +9,8 @@ import os
 import typing as t
 from urllib.parse import parse_qs
 
+from asyncer import syncify, asyncify
+
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request
@@ -229,9 +231,9 @@ class Request(SessionData):
         yield b""
 
     @property
-    async def POST(self) -> t.Any:
+    async def POST_ASYNC(self) -> t.Any:
         """
-        获取post方法传递的参数
+        获取post方法传递的参数，异步
         """
         if self._POST:
             return self._POST
@@ -251,6 +253,17 @@ class Request(SessionData):
                 raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
             self._POST = data
             return self._POST
+
+    @property
+    def POST(self) -> t.Any:
+        """
+        获取post方法传递的参数，同步
+        """
+        return self._POST
+
+    @POST.setter
+    def POST(self, data):
+        self._POST = data
 
     def allowed_file(self, filename) -> bool:
         """
@@ -397,13 +410,18 @@ class Response:
                             args：default 默认响应，会调用package_data对data进行包装
         """
         self.request = request_handle if request_handle else request()
-        if kwargs.get('type') == 'default':
-            self.data = self.package_data(data, self.request.callback)
+        self.kwargs = kwargs
+        self.res = data
+
+    @property
+    async def data(self) -> str:
+        if self.kwargs.get('type') == 'default':
+            return await self.package_data(self.res, self.request.callback)
         else:
-            self.data = data
+            return self.res
 
     @staticmethod
-    def package_data(data: t.Any, callback: str) -> json:
+    async def package_data(data: t.Any, callback: str) -> json:
         """
         打包响应数据
         :param data: 视图返回的数据
@@ -427,7 +445,7 @@ class View:
         super().__init__()
         self.request = request
 
-    def dispatch_request(self):
+    async def dispatch_request(self):
         """
         根据请求类型调用对应的类方法
         """

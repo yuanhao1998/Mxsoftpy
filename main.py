@@ -15,7 +15,6 @@ import typing as t
 from pydantic import ValidationError
 
 from .base import BaseMx
-from .def_http_code import hop_by_hop
 from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
 
@@ -84,7 +83,8 @@ class Mx(BaseMx):
                 "headers": [(k.encode(), v.encode()) for k, v in response.request.headers.items()],
             }
         )
-        await send({"type": "http.response.body", "body": bytes(response.data, encoding='utf-8')})
+        data = await response.data
+        await send({"type": "http.response.body", "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -106,7 +106,8 @@ class Mx(BaseMx):
         response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-        response.request.headers["content-length"] = str(len(bytes(response.data, encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
+        data = await response.data
+        response.request.headers["content-length"] = str(len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:

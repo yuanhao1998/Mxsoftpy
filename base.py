@@ -5,6 +5,8 @@
 
 import typing as t
 
+from mxsoftpy.globals import request
+
 
 class BaseMx:
 
@@ -38,9 +40,10 @@ class BaseMx:
         :param url: 要绑定的url路径
         """
 
-        def view(session):  # 接受此session参数，但是类方法中不需要使用，从session_handler中可获取到
+        async def view(session):  # 接受此session参数，但是类方法中不需要使用，从session_handler中可获取到
             cls = resource(session)
-            return cls.dispatch_request()
+            request().POST = await request().POST_ASYNC
+            return await cls.dispatch_request()
         view.__name__ = resource.__name__
         view.__doc__ = getattr(resource, 'post', '').__doc__
         self.add_url_rule(url, view)
