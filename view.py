@@ -126,9 +126,14 @@ class SessionData:
         if isinstance(self._is_admin, tuple):
             return self._is_admin[1]
         else:
-            from db.customer.Cloudwise.user import DubboUser
-            self._role = (1, DubboUser().check_admin())
-            return self._role[1]
+            if request().config.version == 0:
+                from db.public.Setting.user import UserGroupCache
+                group_info = UserGroupCache().items(request().user_group)
+                self._is_admin = (1, group_info.get('is_admin'))
+            else:
+                from db.customer.Cloudwise.user import DubboUser
+                self._is_admin = (1, DubboUser().check_admin())
+            return self._is_admin[1]
 
 
 class Request(SessionData):
