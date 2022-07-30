@@ -334,7 +334,7 @@ class BaseDB:
         :param key: 要打开的table
         """
 
-        if key.find('.SubMonitor.'):  # 判断是否为监测点表
+        if key and key.find('.SubMonitor.'):  # 判断是否为监测点表
             from opm_pyirm import GetDeviceDBGroupInfo
 
             device = key.split('.', 1)[0]
