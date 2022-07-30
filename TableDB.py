@@ -49,10 +49,9 @@ class TableDB(BaseDB):
             self.exec_tree('Tabledb_ReopenDb', file)
         except DBError:
             try:
-                _host, _port = self._get_host_port(table)
-                host, port = host or _host, port or _port
+                _host, _port = self._get_table_host_port(table)
                 self.__chl = CBSHandleLoc()
-                self.exec_tree('Tabledb_Alloc', host, file, port)
+                self.exec_tree('Tabledb_Alloc', host or _host, file, port or _port)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 

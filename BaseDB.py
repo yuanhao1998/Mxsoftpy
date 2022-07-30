@@ -2,6 +2,7 @@
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
+import json
 import logging
 import threading
 import time
@@ -326,3 +327,20 @@ class BaseDB:
         else:
             host, port = self._get_host_port2(key)
             return self.host or host, self.port or port
+
+    def _get_table_host_port(self, key: str) -> tuple:
+        """
+        判断当前table应该连接的数据库
+        :param key: 要打开的table
+        """
+
+        if key.find('.SubMonitor.'):  # 判断是否为监测点表
+            from opm_pyirm import GetDeviceDBGroupInfo
+
+            device = key.split('.', 1)[0]
+            ret, data = GetDeviceDBGroupInfo(request().session_id, device)
+            if ret == BS_NOERROR:
+                data = json.loads(data)
+                return data.get('host'), data.get('port')
+
+        return self._get_host_port(key)
