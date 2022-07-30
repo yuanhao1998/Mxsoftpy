@@ -338,9 +338,13 @@ class BaseDB:
             from opm_pyirm import GetDeviceDBGroupInfo
 
             device = key.split('.', 1)[0]
-            ret, data = GetDeviceDBGroupInfo(request().session_id, device)
-            if ret == BS_NOERROR:
-                data = json.loads(data)
-                return data.get('host'), data.get('port')
+            try:
+                ret, data = GetDeviceDBGroupInfo(request().session_id, device)
+                if ret == BS_NOERROR:
+                    data = json.loads(data)
+                    return data.get('host'), data.get('port')
+                logging.debug('调用c++方法获取设备所属ts的host、port失败，将使用默认配置，错误码：%s，错误信息：%s' % (ret, str(data)))
+            except Exception as e:
+                logging.debug('自动获取监测点表的host、port失败，将使用默认配置，错误详情：%s' % str(e))
 
         return self._get_host_port(key)
