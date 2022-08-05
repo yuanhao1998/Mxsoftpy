@@ -469,13 +469,14 @@ class TreeDB(BaseDB):
                             default_expression or ' and '.join(expression_list),
                             __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
 
-    def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
+    def filter(self, page_size=0, page_index=1, order_by: Union[str, List[tuple]] = '', is_desc=False,
+               default_expression=None, **kwargs) -> tuple:
         """
         根据属性筛选符合条件的子键（可分页显示）
 
         :param default_expression: 手动传入条件关系，默认关系为 and
         :param is_desc: 是否反序
-        :param order_by: 排序字段
+        :param order_by: 排序字段，单字段排序时：直接传入排序字段、多字段排序时：传入排序列表  [(排序字段, 是否反序)]
         :param page_index: 第几页
         :param page_size: 每页条数
         :param kwargs: 传入的查询条件
@@ -483,9 +484,15 @@ class TreeDB(BaseDB):
         """
         default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
         res_list = list()
-        res = self.exec_bs('bs_treedb_query_subkey_by_condition_ex', default_query_conditions,
-                           default_expression or ' and '.join(expression_list),
-                           res_list, page_size, (page_index - 1) * page_size, order_by, is_desc)
+        if isinstance(order_by, str):
+            res = self.exec_bs('bs_treedb_query_subkey_by_condition_ex', default_query_conditions,
+                               default_expression or ' and '.join(expression_list),
+                               res_list, page_size, (page_index - 1) * page_size, order_by, is_desc)
+        else:
+            res = self.exec_bs('bs_treedb_query_subkey_by_condition_order_bys', default_query_conditions,
+                               default_expression or ' and '.join(expression_list),
+                               res_list, page_size, (page_index - 1) * page_size,
+                               [{'prop_name': i[0], 'is_desc': i[1]} for i in order_by])
 
         return res, res_list
 

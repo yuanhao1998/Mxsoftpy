@@ -161,7 +161,7 @@ class BaseDB:
         res = func(*args, **kwargs)
         return self.return_value(res)
 
-    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
+    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Any:
         """
         用于执行bs开头的函数
 
