@@ -515,5 +515,5 @@ class TreeDB(BaseDB):
 
         :return: 没有返回值
         """
-        return self.exec_bs('DBPropertyTransferSaveFile', prop_name, save_path)
+        return self.exec_bs('DBPropertyTransferSaveFile', prop_name, file_path)
     
