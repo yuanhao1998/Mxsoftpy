@@ -188,12 +188,6 @@ class Mx(BaseMx):
         print('-------------python开始加载缓存-------------')
         add_cache()
         print('-------------python加载缓存结束-------------')
-        from utils.conf.mxconfig import MxConfig
-        if MxConfig.version:
-            from db.customer.Cloudwise.auth import DubboDataOperate
-            print('-------------python开始同步数据权限-------------')
-            DubboDataOperate().device_init()
-            print('-------------python同步数据权限结束-------------')
 
     def run(self, listen='*:7121', reload=False, **kwargs):
         """
