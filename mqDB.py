@@ -3,6 +3,7 @@
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
 import multiprocessing
+from collections import namedtuple
 
 from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
@@ -87,21 +88,11 @@ class MQ(BaseDB):
         process.start()
         process.join()
 
-        class Data:
-            def __init__(self, data: tuple):
-                self.data = data[0]
-                self.label = data[1]
-                self.time = data[2]
-
-            def __str__(self):
-                return str({'data': self.data, 'label': self.label, 'time': self.time})
-
-        err_code = queue.get()
-        err_msg = queue.get()
-        res = queue.get()
+        Data = namedtuple("Data", ['data', 'label', 'time'])
+        err_code, err_msg, res  = queue.get(), queue.get(), queue.get()
 
         if err_code == 0:
-            return Data(res)
+            return Data(*res)
         else:
             raise DBError(err_code, err_msg)
 
