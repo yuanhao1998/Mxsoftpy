@@ -186,7 +186,11 @@ class Mx(BaseMx):
         """
         start = time.time()
         res = self.full_dispatch_request(environ, start_response)
-        url_logger.info('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+        end = time.time() - start
+        if end > 120:
+            url_logger.error('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+        else:
+            url_logger.info('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
         return res
 
     @staticmethod
