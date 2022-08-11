@@ -5,9 +5,9 @@
 import json
 import logging
 import threading
-import time
 from typing import Union, Any, List, Type
 from inspect import currentframe
+from queue import Queue
 
 from superbsapi import *
 
@@ -32,55 +32,40 @@ class BSFuncHandlePool:
         self._mq_pool = {}
         self._mem_pool = {}
 
-    def __wait_handle(self, handle_args: tuple, time_out: int) -> tuple:
-        """
-        等待连接
-        """
-        wait_conn_max = time_out * 2  # 最大连接重试次数：因为0.5秒重试一次，将wait_conn_max粗略设置为time_out的2倍
-        while wait_conn_max > 0:
-            time.sleep(0.5)
-            for index, i in enumerate(self._mem_pool[handle_args]):
-                if not i['lock'].locked():
-                    return i['handle'], i['lock'], index
-            wait_conn_max -= 1
-        else:
-            raise DBError(1, '连接池已满、且超过最大等待时间')
+    def __init_mem_handle(self, handle_args: tuple) -> None:
+        if not self._mem_pool.get(handle_args):
+            self._mem_pool[handle_args] = Queue(10)
 
-    def __new_handle(self, handle_args: tuple):
-        """
-        新建连接
-        """
-        res, handle = bs_memdb_open(*handle_args)
-        if res == BS_NOERROR:
-            lock = threading.Lock()
-            if not self._mem_pool.get(handle_args):
-                self._mem_pool[handle_args] = [{'handle': handle, 'lock': lock}]
-            else:
-                self._mem_pool[handle_args].append({'handle': handle, 'lock': lock})
-            return handle, lock, len(self._mem_pool[handle_args]) - 1
-        raise DBError(res)
+            res_list = list()
+            for _ in range(10):
+                res, handle = bs_memdb_open(*handle_args)
+                self._mem_pool[handle_args].put(handle)
+                res_list.append(res)
+            if set(res_list) != {0}:
+                raise DBError(1, '初始化mem连接池失败！连接参数：%s，返回值列表：%s' % (str(handle_args), str(res_list)))
+
+    def new_mem_handle(self, handle_args: tuple):
+        conn_retry_max = 3
+        while conn_retry_max > 0:
+            res, handle = bs_memdb_open(*handle_args)
+            if res == BS_NOERROR:
+                self._mem_pool[handle_args].put(handle)
+                return handle
+        else:
+            raise DBError(1, 'bs_memdb_open新建连接失败，请检查数据库')
 
     def get_mem_handle(self, handle_args: tuple, time_out: int = 10):
-        """
-        获取连接
-        """
         if not self._mem_pool.get(handle_args):
-            return self.__new_handle(handle_args)
-        else:
-            for index, i in enumerate(self._mem_pool[handle_args]):
-                if not i['lock'].locked():
-                    return i['handle'], i['lock'], index
-            else:
-                with conn_pool_lock:
-                    if len(self._mem_pool[handle_args]) < HANDLE_MAX:
-                        return self.__new_handle(handle_args)
+            self.__init_mem_handle(handle_args)
+        return self._mem_pool[handle_args].get(timeout=time_out)
 
-                return self.__wait_handle(handle_args, time_out)
+    def release_conn(self, handle_args: tuple, handle) -> None:
+        self._mem_pool[handle_args].put(handle)
 
     def __del__(self):
         for i in self._mem_pool.values():
-            for j in i:
-                bs_close_handle(j['handle'])
+            while not i.empty():
+                bs_close_handle(i.get())
 
     @property
     def all_handle(self) -> dict:

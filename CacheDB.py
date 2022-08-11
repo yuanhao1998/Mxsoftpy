@@ -18,11 +18,10 @@ class CacheDB(BaseDB):
         super().__init__()
         self._handle_args = None
 
-    def return_value(self, index: int, res=0) -> Union[int, str, tuple, None]:
+    def return_value(self, res=0) -> Union[int, str, tuple, None]:
         """
         用于直接返回结果集的函数，处理其返回值
 
-        :param index: handle的索引值
         :param res: 错误信息及函数返回的数据
         :return: 返回信息
         """
@@ -35,7 +34,6 @@ class CacheDB(BaseDB):
                 res, handle, data = res
             else:
                 res, handle, data = res[0], res[1], res[2:]
-            handle_pool.all_handle[self._handle_args][index]['handle'] = handle
         else:
             data = None
 
@@ -49,10 +47,10 @@ class CacheDB(BaseDB):
         执行bs函数
         """
 
-        handle, lock, index = handle_pool.get_mem_handle(self._handle_args)
-        with lock:
-            res = eval(operate)(handle, *args, **kwargs)
-            return self.return_value(index, res)
+        handle = handle_pool.get_mem_handle(self._handle_args)
+        res = eval(operate)(handle, *args, **kwargs)
+        handle_pool.release_conn(self._handle_args, handle)
+        return self.return_value(res)
 
     def insert_file(self, file_name: str, config_name: str = 'memdb.ini', host: str = None, port: int = None) -> int:
         """
