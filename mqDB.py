@@ -89,10 +89,10 @@ class MQ(BaseDB):
         process.join()
 
         Data = namedtuple("Data", ['data', 'label', 'time'])
-        err_code, err_msg, res  = queue.get(), queue.get(), queue.get()
+        err_code, err_msg, res = queue.get(), queue.get(), queue.get()
 
         if err_code == 0:
-            return Data(*res)
+            return Data(res[0], res[1], res[2])
         else:
             raise DBError(err_code, err_msg)
 
