@@ -130,7 +130,7 @@ class SessionData:
         else:
             from db.customer.Cloudwise.user import DubboUser
             role_data = DubboUser().role_info()
-            self._role_filter = [i['roleId'] for i in role_data if (i.get('type') != 3 and len(role_data) != 1)
+            self._role_filter = [i['roleId'] for i in role_data if (str(i.get('type')) != '3' and len(role_data) != 1)
                           or len(role_data) == 1]
             return self._role_filter
 
