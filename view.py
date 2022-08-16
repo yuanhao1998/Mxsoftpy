@@ -23,6 +23,7 @@ class SessionData:
         self._user_id = None
         self._user_group = None
         self._role = None
+        self._role_filter = None
         self._is_admin = None
 
     @property
@@ -109,16 +110,29 @@ class SessionData:
     @property
     def role(self) -> list:
         """
-        获取登陆角色
+        获取登陆角色，包含基础角色
         """
         if self._role:
             return self._role
         else:
             from db.customer.Cloudwise.user import DubboUser
             role_data = DubboUser().role_info()
-            self._role = [i['roleId'] for i in role_data if (i.get('type') != 3 and len(role_data) != 1)
-                          or len(role_data) == 1]
+            self._role = [i['roleId'] for i in role_data]
             return self._role
+
+    @property
+    def role_filter(self):
+        """
+        当包含多个角色的时候，过滤基础角色
+        """
+        if self._role_filter:
+            return self._role_filter
+        else:
+            from db.customer.Cloudwise.user import DubboUser
+            role_data = DubboUser().role_info()
+            self._role_filter = [i['roleId'] for i in role_data if (i.get('type') != 3 and len(role_data) != 1)
+                          or len(role_data) == 1]
+            return self._role_filter
 
     @property
     def is_admin(self) -> bool:

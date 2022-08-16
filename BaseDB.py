@@ -4,21 +4,18 @@
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
 import json
 import logging
-import threading
 from typing import Union, Any, List, Type
 from inspect import currentframe
 from queue import Queue
 
 from superbsapi import *
-
 from mxsoftpy import Model
+
 from .db_def import HANDLE_MAX
 from .db_def.db_error import BS_NOERROR
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
 from .globals import request
-
-conn_pool_lock = threading.Lock()  # 连接池锁
 
 
 class BSFuncHandlePool:
@@ -34,10 +31,10 @@ class BSFuncHandlePool:
 
     def __init_mem_handle(self, handle_args: tuple) -> None:
         if not self._mem_pool.get(handle_args):
-            self._mem_pool[handle_args] = Queue(10)
+            self._mem_pool[handle_args] = Queue(HANDLE_MAX)
 
             res_list = list()
-            for _ in range(10):
+            for _ in range(HANDLE_MAX):
                 res, handle = bs_memdb_open(*handle_args)
                 self._mem_pool[handle_args].put(handle)
                 res_list.append(res)
