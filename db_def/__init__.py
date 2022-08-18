@@ -3,4 +3,4 @@
 # @Author   : yh
 # @Remark   : 数据库定义
 
-HANDLE_MAX = 10
+HANDLE_MAX = 5

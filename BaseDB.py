@@ -41,16 +41,6 @@ class BSFuncHandlePool:
             if set(res_list) != {0}:
                 raise DBError(1, '初始化mem连接池失败！连接参数：%s，返回值列表：%s' % (str(handle_args), str(res_list)))
 
-    def new_mem_handle(self, handle_args: tuple):
-        conn_retry_max = 3
-        while conn_retry_max > 0:
-            res, handle = bs_memdb_open(*handle_args)
-            if res == BS_NOERROR:
-                self._mem_pool[handle_args].put(handle)
-                return handle
-        else:
-            raise DBError(1, 'bs_memdb_open新建连接失败，请检查数据库')
-
     def get_mem_handle(self, handle_args: tuple, time_out: int = 10):
         if not self._mem_pool.get(handle_args):
             self.__init_mem_handle(handle_args)

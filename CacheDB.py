@@ -48,8 +48,10 @@ class CacheDB(BaseDB):
         """
 
         handle = handle_pool.get_mem_handle(self._handle_args)
-        res = eval(operate)(handle, *args, **kwargs)
-        handle_pool.release_conn(self._handle_args, handle)
+        try:
+            res = eval(operate)(handle, *args, **kwargs)
+        finally:
+            handle_pool.release_conn(self._handle_args, handle)
         return self.return_value(res)
 
     def insert_file(self, file_name: str, config_name: str = 'memdb.ini', host: str = None, port: int = None) -> int:
