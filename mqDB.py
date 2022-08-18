@@ -4,6 +4,7 @@
 # @Remark   : 存放消息队列的操作方法
 import multiprocessing
 from collections import namedtuple
+from superbsapi import bs_close_handle
 
 from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
@@ -39,6 +40,8 @@ class MQ(BaseDB):
             # self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
             self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag)
         except (DBError, DataError):
+            if getattr(self, '_handle', 0):
+                bs_close_handle(self._handle)
             try:
                 self.exec1('bs_mq_open', name, pwd, open_flag, flag, host, port)
             except DBError as e:

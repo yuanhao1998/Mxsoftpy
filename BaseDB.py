@@ -6,60 +6,14 @@ import json
 import logging
 from typing import Union, Any, List, Type
 from inspect import currentframe
-from queue import Queue
 
 from superbsapi import *
 from mxsoftpy import Model
 
-from .db_def import HANDLE_MAX
 from .db_def.db_error import BS_NOERROR
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
 from .globals import request
-
-
-class BSFuncHandlePool:
-    """
-    bs数据库方法连接池
-    """
-
-    def __init__(self):
-        self._tree_pool = {}
-        self._table_pool = {}
-        self._mq_pool = {}
-        self._mem_pool = {}
-
-    def __init_mem_handle(self, handle_args: tuple) -> None:
-        if not self._mem_pool.get(handle_args):
-            self._mem_pool[handle_args] = Queue(HANDLE_MAX)
-
-            res_list = list()
-            for _ in range(HANDLE_MAX):
-                res, handle = bs_memdb_open(*handle_args)
-                self._mem_pool[handle_args].put(handle)
-                res_list.append(res)
-            if set(res_list) != {0}:
-                raise DBError(1, '初始化mem连接池失败！连接参数：%s，返回值列表：%s' % (str(handle_args), str(res_list)))
-
-    def get_mem_handle(self, handle_args: tuple, time_out: int = 10):
-        if not self._mem_pool.get(handle_args):
-            self.__init_mem_handle(handle_args)
-        return self._mem_pool[handle_args].get(timeout=time_out)
-
-    def release_conn(self, handle_args: tuple, handle) -> None:
-        self._mem_pool[handle_args].put(handle)
-
-    def __del__(self):
-        for i in self._mem_pool.values():
-            while not i.empty():
-                bs_close_handle(i.get())
-
-    @property
-    def all_handle(self) -> dict:
-        return self._mem_pool
-
-
-handle_pool = BSFuncHandlePool()  # 全局连接池
 
 
 class BaseDB:
@@ -190,7 +144,7 @@ class BaseDB:
         if self._handle:
             res = eval(operate)(self._handle, *args, **kwargs)
         else:
-            raise DataError('找不到句柄，请先连接到数据库')
+            raise DBError(1, '找不到句柄，请先连接到数据库')
         return self.return_value(res)
 
     @staticmethod

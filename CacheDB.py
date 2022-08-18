@@ -3,12 +3,12 @@
 # @Remark  : 缓存操作方法，适配redis数据库
 from typing import Union, List, Any
 
-from superbsapi import *
+from superbsapi import bs_close_handle
 from mxsoftpy import Model
 from mxsoftpy.db_def.db_error import BS_NOERROR
 from mxsoftpy.db_def.def_tree import *
 from mxsoftpy.db_def.def_type import type_map
-from mxsoftpy.BaseDB import BaseDB, handle_pool
+from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.exception import DBError
 
 
@@ -42,18 +42,6 @@ class CacheDB(BaseDB):
 
         return data
 
-    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
-        """
-        执行bs函数
-        """
-
-        handle = handle_pool.get_mem_handle(self._handle_args)
-        try:
-            res = eval(operate)(handle, *args, **kwargs)
-        finally:
-            handle_pool.release_conn(self._handle_args, handle)
-        return self.return_value(res)
-
     def insert_file(self, file_name: str, config_name: str = 'memdb.ini', host: str = None, port: int = None) -> int:
         """
         插入数据库
@@ -82,11 +70,18 @@ class CacheDB(BaseDB):
         """
 
         _host, _port = self._get_host_port(file)
-        self._handle_args = (
-            (db or self._get_file(),
-             TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
-             file, host or _host, port or _port)
-        )
+        try:
+            self.exec_handle('bs_memdb_reopen', db or self._get_file(),
+                             TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST, file)
+        except DBError:
+            try:
+                if getattr(self, '_handle', 0):  # 释放handle
+                    bs_close_handle(self._handle)
+                self.exec1('bs_memdb_open', db or self._get_file(),
+                             TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+                             file, host or _host, port or _port)
+            except DBError as e:
+                raise DBError(e.err_code, '打开Cache数据库失败')
 
         return self
 
@@ -102,7 +97,7 @@ class CacheDB(BaseDB):
         :param update: 如果设置为True，则只有name存在时，当前set操作才执行（修改）
         """
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
-        return self.exec_bs('bs_memdb_set', key, value, value_type, expire, create, update)
+        return self.exec_handle('bs_memdb_set', key, value, value_type, expire, create, update)
 
     def get(self, key: str) -> Any:
         """
@@ -112,7 +107,7 @@ class CacheDB(BaseDB):
         """
 
         try:
-            return self.exec_bs('bs_memdb_get', key)
+            return self.exec_handle('bs_memdb_get', key)
         except DBError as e:
             if e.err_code == 28 or e.err_code == 1000:  # 错误码28代表不存在此hash，此时返回None而不是报错
                 return None
@@ -128,7 +123,7 @@ class CacheDB(BaseDB):
         :param key: 要删除的key
         """
         try:
-            return self.exec_bs('bs_memdb_delete_key', key)
+            return self.exec_handle('bs_memdb_delete_key', key)
         except DBError as e:
             if e.err_code == 176:
                 pass
@@ -142,7 +137,7 @@ class CacheDB(BaseDB):
         :param items: 插入的数据
         :param expire: 过期时间，默认永不过期
         """
-        return self.exec_bs('bs_memdb_mset', self._generation_items(items), expire) if items else 0
+        return self.exec_handle('bs_memdb_mset', self._generation_items(items), expire) if items else 0
 
     def mget(self, keys: List[str]) -> dict:
         """
@@ -151,7 +146,7 @@ class CacheDB(BaseDB):
         :param keys: 要查询的key
         """
         res = dict()
-        self.exec_bs('bs_memdb_mget', keys, res)
+        self.exec_handle('bs_memdb_mget', keys, res)
         return res
 
     def hset(self, name: str, key: str, value: Any, value_type=None, expire: int = -1) -> int:
@@ -165,7 +160,7 @@ class CacheDB(BaseDB):
         :param expire: 过期时间
         """
         value_type = type_map.get(value_type) or type_map.get(type(value).__name__)
-        return self.exec_bs('bs_memdb_hset', name, key, value, value_type, expire)
+        return self.exec_handle('bs_memdb_hset', name, key, value, value_type, expire)
 
     def hget(self, name: str, key: str) -> Any:
         """
@@ -175,7 +170,7 @@ class CacheDB(BaseDB):
         :param key: key
         """
         try:
-            return self.exec_bs('bs_memdb_hget', name, key)
+            return self.exec_handle('bs_memdb_hget', name, key)
         except DBError as e:
             if e.err_code == 28 or e.err_code == 1000:  # 错误码28代表不存在此hash，此时返回None而不是报错
                 return None
@@ -191,7 +186,7 @@ class CacheDB(BaseDB):
         :param name: hash名称
         :param items: 插入的数据
         """
-        return self.exec_bs('bs_memdb_hmset', name, self._generation_items(items)) if items else 0
+        return self.exec_handle('bs_memdb_hmset', name, self._generation_items(items)) if items else 0
 
     def hmget(self, name: str, keys: List[str] = None) -> dict:
         """
@@ -201,7 +196,7 @@ class CacheDB(BaseDB):
         :param keys: 要查询的key, 不传获取所有
         """
         res = dict()
-        self.exec_bs('bs_memdb_hmget', name, keys or [], res)
+        self.exec_handle('bs_memdb_hmget', name, keys or [], res)
         return res
 
     def hdel_key(self, name: str, key: str) -> int:
@@ -212,7 +207,7 @@ class CacheDB(BaseDB):
         :param key: key
         """
         try:
-            return self.exec_bs('bs_memdb_delete_hkey', name, key)
+            return self.exec_handle('bs_memdb_delete_hkey', name, key)
         except DBError as e:
             if e.err_code == 176:
                 pass
@@ -227,7 +222,7 @@ class CacheDB(BaseDB):
         :param keys: key
         """
         try:
-            return self.exec_bs('bs_memdb_delete_hmkey', name, keys)
+            return self.exec_handle('bs_memdb_delete_hmkey', name, keys)
         except DBError as e:
             if e.err_code == 176:
                 pass
@@ -241,7 +236,7 @@ class CacheDB(BaseDB):
         :param name: hash名称
         """
         try:
-            return self.exec_bs('bs_memdb_delete_hash', name)
+            return self.exec_handle('bs_memdb_delete_hash', name)
         except DBError as e:
             if e.err_code == 176:
                 pass
