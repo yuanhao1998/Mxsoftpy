@@ -20,8 +20,11 @@ from .def_http_code import hop_by_hop
 from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
 
-from utils.conf.mxlog import setup_log
-url_logger = setup_log(logging.DEBUG, 'url')
+try:
+    from utils.conf.mxlog import setup_log
+    url_logger = setup_log(logging.DEBUG, 'url')
+except (ImportError, ModuleNotFoundError):
+    pass
 
 if t.TYPE_CHECKING:
     from .module import Module
