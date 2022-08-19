@@ -39,7 +39,7 @@ class MQ(BaseDB):
         try:
             # self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
             self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag)
-        except (DBError, DataError):
+        except DBError:
             if getattr(self, '_handle', 0):
                 bs_close_handle(self._handle)
             try:
