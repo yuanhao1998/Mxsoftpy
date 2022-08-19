@@ -195,9 +195,9 @@ class Mx(BaseMx):
         res = await self.full_dispatch_request(scope, receive, send)
         end = time.time() - start
         if end > 120:
-            url_logger.error('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+            url_logger.error('url：%s，time：%s' % (scope.get('path', '').split('?')[0], str(time.time() - start)))
         else:
-            url_logger.info('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+            url_logger.info('url：%s，time：%s' % (scope.get('path', '').split('?')[0], str(time.time() - start)))
         return res
 
     @staticmethod
