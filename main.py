@@ -10,6 +10,7 @@ import os
 import threading
 import time
 import traceback
+import logging
 import typing as t
 
 from pydantic import ValidationError
@@ -17,6 +18,12 @@ from pydantic import ValidationError
 from .base import BaseMx
 from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
+
+try:
+    from utils.conf.mxlog import setup_log
+    url_logger = setup_log(logging.DEBUG, 'url')
+except (ImportError, ModuleNotFoundError):
+    pass
 
 if t.TYPE_CHECKING:
     from .module import Module
@@ -184,7 +191,14 @@ class Mx(BaseMx):
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        await self.full_dispatch_request(scope, receive, send)
+        start = time.time()
+        res = await self.full_dispatch_request(scope, receive, send)
+        end = time.time() - start
+        if end > 120:
+            url_logger.error('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+        else:
+            url_logger.info('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
+        return res
 
     @staticmethod
     def load_cache():

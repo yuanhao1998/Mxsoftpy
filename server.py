@@ -23,21 +23,21 @@ class Server:
         """
         return self.db.create(**self.model(*args, **kwargs).dict())
 
-    def update(self, code: str,  *args, **kwargs):
+    def update(self, code,  *args, **kwargs):
         """
         更新数据的base方法
         :param code: 要更新的键
         """
         return self.db.update(code, **self.model(*args, **kwargs).dict())
 
-    def delete(self, code: str):
+    def delete(self, code):
         """
         删除数据的base方法
         :param code: 要删除的键
         """
         return self.db.delete(code)
 
-    def retrieve(self, code: str):
+    def retrieve(self, code):
         """
         获取单个数据详情的base方法
         :param code: 要获取详情的键

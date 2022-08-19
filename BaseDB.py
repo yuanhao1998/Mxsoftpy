@@ -2,91 +2,18 @@
 # @Create   : 2021/9/13 9:24
 # @Author   : yh
 # @Remark   : 数据库操作方法基类，用于执行数据库方法及返回值校验
+import json
 import logging
-import threading
-import time
 from typing import Union, Any, List, Type
 from inspect import currentframe
 
 from superbsapi import *
-
 from mxsoftpy import Model
-from .db_def import HANDLE_MAX
+
 from .db_def.db_error import BS_NOERROR
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
 from .globals import request
-
-conn_pool_lock = threading.Lock()  # 连接池锁
-
-
-class BSFuncHandlePool:
-    """
-    bs数据库方法连接池
-    """
-
-    def __init__(self):
-        self._tree_pool = {}
-        self._table_pool = {}
-        self._mq_pool = {}
-        self._mem_pool = {}
-
-    def __wait_handle(self, handle_args: tuple, time_out: int) -> tuple:
-        """
-        等待连接
-        """
-        wait_conn_max = time_out * 2  # 最大连接重试次数：因为0.5秒重试一次，将wait_conn_max粗略设置为time_out的2倍
-        while wait_conn_max > 0:
-            time.sleep(0.5)
-            for index, i in enumerate(self._mem_pool[handle_args]):
-                if not i['lock'].locked():
-                    return i['handle'], i['lock'], index
-            wait_conn_max -= 1
-        else:
-            raise DBError(1, '连接池已满、且超过最大等待时间')
-
-    def __new_handle(self, handle_args: tuple):
-        """
-        新建连接
-        """
-        res, handle = bs_memdb_open(*handle_args)
-        if res == BS_NOERROR:
-            lock = threading.Lock()
-            if not self._mem_pool.get(handle_args):
-                self._mem_pool[handle_args] = [{'handle': handle, 'lock': lock}]
-            else:
-                self._mem_pool[handle_args].append({'handle': handle, 'lock': lock})
-            return handle, lock, len(self._mem_pool[handle_args]) - 1
-        raise DBError(res)
-
-    def get_mem_handle(self, handle_args: tuple, time_out: int = 10):
-        """
-        获取连接
-        """
-        if not self._mem_pool.get(handle_args):
-            return self.__new_handle(handle_args)
-        else:
-            for index, i in enumerate(self._mem_pool[handle_args]):
-                if not i['lock'].locked():
-                    return i['handle'], i['lock'], index
-            else:
-                with conn_pool_lock:
-                    if len(self._mem_pool[handle_args]) < HANDLE_MAX:
-                        return self.__new_handle(handle_args)
-
-                return self.__wait_handle(handle_args, time_out)
-
-    def __del__(self):
-        for i in self._mem_pool.values():
-            for j in i:
-                bs_close_handle(j['handle'])
-
-    @property
-    def all_handle(self) -> dict:
-        return self._mem_pool
-
-
-handle_pool = BSFuncHandlePool()  # 全局连接池
 
 
 class BaseDB:
@@ -160,7 +87,7 @@ class BaseDB:
         res = func(*args, **kwargs)
         return self.return_value(res)
 
-    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Union[int, str, tuple, None]:
+    def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Any:
         """
         用于执行bs开头的函数
 
@@ -217,7 +144,7 @@ class BaseDB:
         if self._handle:
             res = eval(operate)(self._handle, *args, **kwargs)
         else:
-            raise DataError('找不到句柄，请先连接到数据库')
+            raise DBError(1, '找不到句柄，请先连接到数据库')
         return self.return_value(res)
 
     @staticmethod
@@ -326,3 +253,24 @@ class BaseDB:
         else:
             host, port = self._get_host_port2(key)
             return self.host or host, self.port or port
+
+    def _get_table_host_port(self, key: str) -> tuple:
+        """
+        判断当前table应该连接的数据库
+        :param key: 要打开的table
+        """
+
+        if key and key.find('.SubMonitor.'):  # 判断是否为监测点表
+            from opm_pyirm import GetDeviceDBGroupInfo
+
+            device = key.split('.', 1)[0]
+            try:
+                ret, data = GetDeviceDBGroupInfo(request().session_id, device)
+                if ret == BS_NOERROR:
+                    data = json.loads(data)
+                    return data.get('host'), data.get('port')
+                logging.debug('调用c++方法获取设备所属ts的host、port失败，将使用默认配置，错误码：%s，错误信息：%s' % (ret, str(data)))
+            except Exception as e:
+                logging.debug('自动获取监测点表的host、port失败，将使用默认配置，错误详情：%s' % str(e))
+
+        return self._get_host_port(key)

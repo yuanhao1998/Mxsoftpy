@@ -469,23 +469,58 @@ class TreeDB(BaseDB):
                             default_expression or ' and '.join(expression_list),
                             __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
 
-    def filter(self, page_size=0, page_index=1, order_by='', is_desc=False, default_expression=None, **kwargs) -> tuple:
+    def filter(self, page_size=0, page_index=1, order_by: Union[str, List[tuple]] = '', is_desc=False,
+               default_expression=None, **kwargs) -> tuple:
         """
         根据属性筛选符合条件的子键（可分页显示）
 
         :param default_expression: 手动传入条件关系，默认关系为 and
         :param is_desc: 是否反序
-        :param order_by: 排序字段
+        :param order_by: 排序字段，单字段排序时：直接传入排序字段、多字段排序时：传入排序列表  [(排序字段, 是否反序)]
         :param page_index: 第几页
         :param page_size: 每页条数
         :param kwargs: 传入的查询条件
         :return: 总条数，查询结果
         """
         default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
-
         res_list = list()
-        res = self.exec_bs('bs_treedb_query_subkey_by_condition_ex', default_query_conditions,
-                           default_expression or ' and '.join(expression_list),
-                           res_list, page_size, (page_index - 1) * page_size, order_by, is_desc)
+        if isinstance(order_by, str):
+            res = self.exec_bs('bs_treedb_query_subkey_by_condition_ex', default_query_conditions,
+                               default_expression or ' and '.join(expression_list),
+                               res_list, page_size, (page_index - 1) * page_size, order_by, is_desc)
+        else:
+            res = self.exec_bs('bs_treedb_query_subkey_by_condition_order_bys', default_query_conditions,
+                               default_expression or ' and '.join(expression_list),
+                               res_list, page_size, (page_index - 1) * page_size,
+                               [{'prop_name': i[0], 'is_desc': i[1]} for i in order_by])
 
         return res, res_list
+
+    def get_binary_prop(self, prop_name: str, is_save_file = False, save_path: str = None, file_name: str = None) -> bytes:
+        """
+        获取二进制内容
+        保存文件的名称目前不支持自定义，文件名称为存储时的文件名称
+
+        :param prop_name: 属性名
+        :param is_save_file: 是否保存为文件
+        :param save_path: 文件保存路径
+
+        :return: 如果为读取内容，则返回二进制文件内容， 如果为保存文件，则没有返回值
+        """
+        import os
+        if not is_save_file:
+            return self.exec_bs('bs_treedb_get_property', prop_name)
+        else:
+            return self.exec_bs('DBPropertyTransferSaveFile', prop_name, os.path.join(save_path, file_name))
+
+    def install_binary_prop(self, prop_name: str, file_path: str = None):
+        """
+        保存二进制内容, 直接插入二进制数据为 bs_treedb_insert_property
+
+        :param prop_name: 保存的属性名
+        :param file_path: 文件路径
+
+        :return: 没有返回值
+        """
+        return self.exec_bs('DBPropertyTransferSaveFile', prop_name, file_path)
+    
