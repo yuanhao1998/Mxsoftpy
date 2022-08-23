@@ -185,6 +185,9 @@ class TreeDB(BaseDB):
         :param prop_list: 要获取的属性列表
         :return: 子键及其属性字典
         """
+        if key_list == [] or prop_list == []:
+            return {}
+
         res_dict = dict()
         if isinstance(key_list, str):
             key_list = [key_list]
