@@ -404,7 +404,7 @@ class TreeDB(BaseDB):
                 expression_list.append(' %s ' % i)
                 args.append(temp)
                 i += 1
-            elif symbol == 'like':
+            elif symbol in ['like', 'nclike']:
                 if isinstance(value, str):
                     expression_list.append(' %s ' % i)
                     if len(temp['value']) >= 2:
