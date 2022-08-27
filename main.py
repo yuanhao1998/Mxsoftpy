@@ -10,7 +10,6 @@ import os
 import threading
 import time
 import traceback
-import logging
 import typing as t
 
 from pydantic import ValidationError
@@ -19,12 +18,6 @@ from .base import BaseMx
 from .def_http_code import hop_by_hop
 from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
-
-try:
-    from utils.conf.mxlog import setup_log
-    url_logger = setup_log(logging.DEBUG, 'url')
-except (ImportError, ModuleNotFoundError):
-    pass
 
 if t.TYPE_CHECKING:
     from .module import Module
@@ -88,7 +81,7 @@ class Mx(BaseMx):
         response = self.process_response(rv)
         start_response(str(response.request.status_code),
                        [(k, v or '') for k, v in response.request.headers.items() if k not in hop_by_hop])
-        return [bytes(str(response.data), encoding='utf-8') if not isinstance(response.data, bytes) else response.data]
+        return [bytes(json.dumps(response.data), encoding='utf-8') if not isinstance(response.data, bytes) else response.data]
 
     def preprocess_request(self):
         """
@@ -110,7 +103,7 @@ class Mx(BaseMx):
         response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-        response.request.headers["Content-Length"] = str(len(bytes(str(response.data), encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
+        response.request.headers["Content-Length"] = str(len(bytes(json.dumps(response.data), encoding='utf-8') if not isinstance(response.data, bytes) else response.data))
         return response
 
     def run_func(self) -> Response:
@@ -187,14 +180,7 @@ class Mx(BaseMx):
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        start = time.time()
-        res = self.full_dispatch_request(environ, start_response)
-        end = time.time() - start
-        if end > 120:
-            url_logger.error('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
-        else:
-            url_logger.info('url：%s，time：%s' % (environ.get('PATH_INFO', '').split('?')[0], str(time.time() - start)))
-        return res
+        return self.full_dispatch_request(environ, start_response)
 
     @staticmethod
     def load_cache():
