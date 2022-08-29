@@ -241,7 +241,7 @@ class BaseDB:
             try:
                 host = request().config.HOST
                 port = request().config.PORT
-            except (ModuleNotFoundError, ImportError, AttributeError):
+            except BaseException:
                 host = '127.0.0.1'
                 port = 8123
         return host, port

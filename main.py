@@ -8,9 +8,9 @@ import subprocess
 import sys
 import os
 import threading
+import contextvars
 import time
 import traceback
-import logging
 import typing as t
 
 from pydantic import ValidationError
@@ -22,7 +22,7 @@ from .view import Request, Response
 if t.TYPE_CHECKING:
     from .module import Module
 
-local_val = threading.local()  # 全局ThreadLocal对象
+request_context = contextvars.ContextVar('request')  # request上下文变量
 
 
 class Mx(BaseMx):
@@ -66,7 +66,7 @@ class Mx(BaseMx):
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
 
-        local_val.session_handler = self.session_handler
+        request_context.set(self.session_handler)
 
         try:
             rv = await self.preprocess_request()

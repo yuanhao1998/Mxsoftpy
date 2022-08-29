@@ -12,8 +12,8 @@ def request() -> "Request":
     """
     session处理实例
     """
-    from .main import local_val
-    return local_val.session_handler
+    from .main import request_context
+    return request_context.get()
 
 
 def config():
