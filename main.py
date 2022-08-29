@@ -19,12 +19,6 @@ from .base import BaseMx
 from .exception import NotFoundError, MxBaseException
 from .view import Request, Response
 
-try:
-    from utils.conf.mxlog import setup_log
-    url_logger = setup_log(logging.DEBUG, 'url')
-except (ImportError, ModuleNotFoundError):
-    pass
-
 if t.TYPE_CHECKING:
     from .module import Module
 
@@ -91,7 +85,7 @@ class Mx(BaseMx):
             }
         )
         data = await response.data
-        await send({"type": "http.response.body", "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
+        await send({"type": "http.response.body", "body": bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -114,7 +108,7 @@ class Mx(BaseMx):
         for after_func in self.after_request_funcs:
             response = after_func(response)
         data = await response.data
-        response.request.headers["content-length"] = str(len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
+        response.request.headers["content-length"] = str(len(bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:
@@ -191,14 +185,7 @@ class Mx(BaseMx):
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        start = time.time()
-        res = await self.full_dispatch_request(scope, receive, send)
-        end = time.time() - start
-        if end > 120:
-            url_logger.error('url：%s，time：%s' % (scope.get('path', '').split('?')[0], str(time.time() - start)))
-        else:
-            url_logger.info('url：%s，time：%s' % (scope.get('path', '').split('?')[0], str(time.time() - start)))
-        return res
+        return await self.full_dispatch_request(scope, receive, send)
 
     @staticmethod
     def load_cache():

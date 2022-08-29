@@ -3,12 +3,15 @@
 # @Author   : yh
 # @Remark   : session处理类
 import cgi
+import functools
 import logging
 import json
 import os
 import typing as t
 from asyncio import iscoroutinefunction
 from urllib.parse import parse_qs
+
+import anyio
 
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
@@ -132,7 +135,7 @@ class SessionData:
             from db.customer.Cloudwise.user import DubboUser
             role_data = DubboUser().role_info()
             self._role_filter = [i['roleId'] for i in role_data if (str(i.get('type')) != '3' and len(role_data) != 1)
-                          or len(role_data) == 1]
+                                 or len(role_data) == 1]
             return self._role_filter
 
     @property
@@ -270,7 +273,8 @@ class Request(SessionData):
                     self.content_type.split(';')[0] if self.content_type else 'application/x-www-form-urlencoded')(
                     b"".join(chunks).decode())
             except TypeError:
-                raise DataError('不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
+                raise DataError(
+                    '不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
             self._POST = data
             return self._POST
 
@@ -460,6 +464,12 @@ class Response:
         return data
 
 
+async def run_in_threadpool(func, *args, **kwargs):
+    if kwargs:
+        func = functools.partial(func, **kwargs)
+    return await anyio.to_thread.run_sync(func, *args)
+
+
 class View:
     def __init__(self, request: Request, *args, **kwargs):
         super().__init__()
@@ -477,4 +487,5 @@ class View:
 
         if not meth:
             raise HTTPMethodError(self.request.request_type)
-        return await meth() if iscoroutinefunction(meth) else meth()
+
+        return await meth() if iscoroutinefunction(meth) else await run_in_threadpool(meth)
