@@ -65,6 +65,8 @@ class Mx(BaseMx):
         self.session_handler = Request(scope, receive, send)
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
+        if scope.get('type') == 'http':
+            self.session_handler.POST_PROP = await self.session_handler.POST_ASYNC
 
         request_context.set(self.session_handler)
 
@@ -85,7 +87,7 @@ class Mx(BaseMx):
             }
         )
         data = await response.data
-        await send({"type": "http.response.body", "body": bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data})
+        await send({"type": "http.response.body", "body": bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -108,7 +110,7 @@ class Mx(BaseMx):
         for after_func in self.after_request_funcs:
             response = after_func(response)
         data = await response.data
-        response.request.headers["content-length"] = str(len(bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data))
+        response.request.headers["content-length"] = str(len(bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:

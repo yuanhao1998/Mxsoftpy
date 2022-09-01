@@ -180,6 +180,8 @@ class Request(SessionData):
         self._cookie = None
         self._GET = None
         self._POST = None
+        self._POST_PROP = None
+        self._POST_NEW = None
 
     @property
     def headers(self) -> dict:
@@ -279,15 +281,19 @@ class Request(SessionData):
             return self._POST
 
     @property
-    def POST(self) -> t.Any:
-        """
-        获取post方法传递的参数，同步
-        """
-        return self._POST
+    def POST_PROP(self) -> t.Any:
+        return self._POST_PROP
 
-    @POST.setter
-    def POST(self, data):
-        self._POST = data
+    @POST_PROP.setter
+    def POST_PROP(self, data):
+        self._POST_PROP = data
+
+    @property
+    def POST(self):
+        if not self._POST_NEW:
+            data = {k: v for k, v in request().POST_PROP.items()} if request().POST_PROP else {}
+            self._POST_NEW = data
+        return self._POST_NEW
 
     def allowed_file(self, filename) -> bool:
         """
