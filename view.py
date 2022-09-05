@@ -9,6 +9,7 @@ import json
 import os
 import typing as t
 from asyncio import iscoroutinefunction
+from io import BytesIO
 from urllib.parse import parse_qs
 
 import anyio
@@ -16,6 +17,7 @@ import anyio
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request
+from .parse import scope_to_environ
 
 
 class SessionData:
@@ -180,7 +182,6 @@ class Request(SessionData):
         self._cookie = None
         self._GET = None
         self._POST = None
-        self._POST_PROP = None
         self._POST_NEW = None
 
     @property
@@ -265,15 +266,17 @@ class Request(SessionData):
         else:
             parse_dict = {
                 'application/x-www-form-urlencoded': self._post_x_www_form_urlencoded,
-                'application/json': self._post_json
+                'application/json': self._post_json,
+                'multipart/form-data': self._post_form_data
             }
             chunks = []
             async for chunk in self.stream():
                 chunks.append(chunk)
             try:
-                data = parse_dict.get(
-                    self.content_type.split(';')[0] if self.content_type else 'application/x-www-form-urlencoded')(
-                    b"".join(chunks).decode())
+                content_type = self.content_type.split(';')[0] if self.content_type\
+                    else 'application/x-www-form-urlencoded'
+                data = parse_dict.get(content_type)(b"".join(chunks) if content_type == 'multipart/form-data'
+                                                    else b"".join(chunks).decode())
             except TypeError:
                 raise DataError(
                     '不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
@@ -282,11 +285,11 @@ class Request(SessionData):
 
     @property
     def POST_PROP(self) -> t.Any:
-        return self._POST_PROP
+        return self._POST
 
     @POST_PROP.setter
     def POST_PROP(self, data):
-        self._POST_PROP = data
+        self._POST = data
 
     @property
     def POST(self):
@@ -307,18 +310,16 @@ class Request(SessionData):
         存储上传的文件
         :param path: 上传路径, 不传使用默认配置
         """
-        fs = cgi.FieldStorage(fp=self.environ.get('wsgi.input'), environ=self.environ, keep_blank_values=1)
-
         res = []
-        for file in fs.list:
-            if not file.filename:
+        for file in self._POST:
+            if not file.get('filename'):
                 continue
-            if not self.allowed_file(file.filename):
-                raise FileError('不支持的文件类型: %s' % file.filename)
+            if not self.allowed_file(file.get('filename')):
+                raise FileError('不支持的文件类型: %s' % file.get('filename'))
 
-            with open(os.path.join(path or self.config.TMP_DIR, file.filename), 'wb') as f:
-                f.write(file.value)
-            res.append({'name': file.name, 'filename': file.filename, 'data': file.value, 'detail': file})
+            with open(os.path.join(path or self.config.TMP_DIR, file.get('filename')), 'wb') as f:
+                f.write(file['data'])
+            res.append(file)
         return res[0] if len(res) == 1 else res
 
     def upload(self, path):
@@ -342,11 +343,15 @@ class Request(SessionData):
         """
         return self.GET
 
-    def _post_form_data(self):
+    def _post_form_data(self, post_data):
         """
-        解析form-data
+        解析form-data、用于文件上传
         """
-        # TODO 未来再支持form_data
+
+        fs = cgi.FieldStorage(fp=BytesIO(post_data), environ=scope_to_environ(self.scope),
+                              headers=self.headers, keep_blank_values=1)
+
+        return [{'name': i.name, 'filename': i.filename, 'data': i.value, 'detail': i} for i in fs.list]
 
     @staticmethod
     def _post_x_www_form_urlencoded(post_data: str) -> dict:
