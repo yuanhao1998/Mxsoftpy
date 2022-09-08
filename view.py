@@ -294,7 +294,13 @@ class Request(SessionData):
     @property
     def POST(self):
         if not self._POST_NEW:
-            data = {k: v for k, v in request().POST_PROP.items()} if request().POST_PROP else {}
+            post_prop = request().POST_PROP
+            if not post_prop:
+                data = {}
+            elif isinstance(post_prop, list):
+                data = [i for i in post_prop]
+            else:
+                data = {k: v for k, v in post_prop.items()}
             self._POST_NEW = data
         return self._POST_NEW
 
