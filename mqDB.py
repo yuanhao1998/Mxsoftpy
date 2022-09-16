@@ -3,6 +3,7 @@
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
 import multiprocessing
+import platform
 from collections import namedtuple
 from superbsapi import bs_close_handle
 
@@ -86,23 +87,26 @@ class MQ(BaseDB):
         :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
         :return: 取到的数据类
         """
-        queue = multiprocessing.Queue()
-        process = multiprocessing.Process(target=self.pop_data, args=(queue, time_out, is_peek))
-        process.start()
-        process.join()
+
+        # TODO 临时处理，只对linux新开进程，因为win开进程后需要Pickling，CBSHandle暂时不支持
+        if platform.system() == 'Linux':
+            queue = multiprocessing.Queue()
+            process = multiprocessing.Process(target=self.queue_put_pop_data, args=(queue, time_out, is_peek))
+            process.start()
+            process.join()
+            err_code, err_msg, res = queue.get(), queue.get(), queue.get()
+        else:
+            err_code, err_msg, res = self.pop_data(time_out, is_peek)
 
         Data = namedtuple("Data", ['data', 'label', 'time'])
-        err_code, err_msg, res = queue.get(), queue.get(), queue.get()
-
         if err_code == 0:
             return Data(res[0], res[1], res[2])
         else:
             raise DBError(err_code, err_msg)
 
-    def pop_data(self, queue: multiprocessing.Queue, time_out: int = 0, is_peek: bool = False):
+    def pop_data(self, time_out: int = 0, is_peek: bool = False):
         """
         从消息队列中取出一条数据
-        :param queue: 通信队列
         :param time_out: 如果队列为空，此变量可设置等待时间，如果设置999999则认为无限等待
         :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
         :return: 取到的数据类
@@ -120,6 +124,17 @@ class MQ(BaseDB):
                 err_code = e.err_code
                 err_msg = e.msg
                 res = (None, None, None, None, None)
+        return err_code, err_msg, res
+
+    def queue_put_pop_data(self, queue: multiprocessing.Queue, time_out: int = 0, is_peek: bool = False):
+        """
+        从消息队列中取出一条数据
+        :param queue: 通信队列
+        :param time_out: 如果队列为空，此变量可设置等待时间，如果设置999999则认为无限等待
+        :param is_peek: 此变量为假则把接收到的消息从队列中清除，为真只取回消息的拷贝
+        :return: 取到的数据类
+        """
+        err_code, err_msg, res = self.pop_data(time_out, is_peek)
         queue.put(err_code)
         queue.put(err_msg)
         queue.put(res)
