@@ -170,7 +170,14 @@ class TableDB(BaseDB):
         :param sql: 查询sql
         """
         res_list = []
-        self.exec_tree('Tabledb_Query', sql, res_list)
+        try:
+            self.exec_tree('Tabledb_Query', sql, res_list)
+        except DBError as e:
+            if e.err_code == 288:  # 错误码288意思是表为空，不应该报错
+                pass
+            else:
+                raise e
+
         return res_list
 
     def insert(self, table: str, keys: tuple, values: List[tuple]):
@@ -259,13 +266,7 @@ class TableDB(BaseDB):
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
-        try:
-            total = self.exec_for_sql(count_sql)[0]['count(*)']
-            data = self.exec_for_sql(sql)
-        except DBError as e:
-            if e.err_code == 288:  # 错误码288意思是表为空，不应该报错
-                total, data = 0, []
-            else:
-                raise e
+        total = self.exec_for_sql(count_sql)[0]['count(*)']
+        data = self.exec_for_sql(sql)
 
         return min(count, total) if count else total, data
