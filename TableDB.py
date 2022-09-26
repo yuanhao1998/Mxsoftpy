@@ -240,9 +240,20 @@ class TableDB(BaseDB):
                 assert isinstance(value, list) and len(value) == 2, '查询格式错误！正确示例：a__between=[1, 3]'
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
+            # query_list.append(
+            #     "%s %s %s" % (
+            #     key, sql_symbol_map[symbol], value))
+
+            if sql_symbol_map[symbol] == 'between':
+                value = value
+                print(1)
+            else:
+                print(2)
+                value = value if type(value).__name__ != 'str' else '\'' + value + '\''
+            print(value)
             query_list.append(
                 "%s %s %s" % (
-                key, sql_symbol_map[symbol], value if type(value).__name__ != 'str' else '\'' + value + '\''))
+                key, sql_symbol_map[symbol], value))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
@@ -266,7 +277,13 @@ class TableDB(BaseDB):
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
-        total = self.exec_for_sql(count_sql)[0]['count(*)']
-        data = self.exec_for_sql(sql)
+        try:
+            total = self.exec_for_sql(count_sql)[0]['count(*)']
+            data = self.exec_for_sql(sql)
+        except DBError as e:
+            if e.err_code == 288:  # 错误码288意思是表为空，不应该报错
+                total, data = 0, []
+            else:
+                raise e
 
         return min(count, total) if count else total, data
