@@ -49,9 +49,11 @@ class TableDB(BaseDB):
             self.exec_tree('Tabledb_ReopenDb', file)
         except DBError:
             try:
-                _host, _port = self._get_table_host_port(table)
+                # _host, _port = self._get_table_host_port(table)
+                _host = ''
+                _prot = 8123
                 self.__chl = CBSHandleLoc()
-                self.exec_tree('Tabledb_Alloc', host or _host, file, port or _port)
+                self.exec_tree('Tabledb_Alloc', host or _host, file, 8123 or _port)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 
@@ -235,7 +237,7 @@ class TableDB(BaseDB):
 
             query_list.append(
                 "%s %s %s" % (
-                key, sql_symbol_map[symbol], value if type(value).__name__ != 'str' else '\'' + value + '\''))
+                key, sql_symbol_map[symbol], value))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
