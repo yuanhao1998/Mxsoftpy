@@ -49,11 +49,9 @@ class TableDB(BaseDB):
             self.exec_tree('Tabledb_ReopenDb', file)
         except DBError:
             try:
-                # _host, _port = self._get_table_host_port(table)
-                _host = ''
-                _prot = 8123
+                _host, _port = self._get_table_host_port(table)
                 self.__chl = CBSHandleLoc()
-                self.exec_tree('Tabledb_Alloc', host or _host, file, 8123 or _port)
+                self.exec_tree('Tabledb_Alloc', host or _host, file, port or _port)
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 
@@ -235,6 +233,17 @@ class TableDB(BaseDB):
                 assert isinstance(value, list) and len(value) == 2, '查询格式错误！正确示例：a__between=[1, 3]'
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
+            # query_list.append(
+            #     "%s %s %s" % (
+            #     key, sql_symbol_map[symbol], value))
+
+            if sql_symbol_map[symbol] == 'between':
+                value = value
+                print(1)
+            else:
+                print(2)
+                value = value if type(value).__name__ != 'str' else '\'' + value + '\''
+            print(value)
             query_list.append(
                 "%s %s %s" % (
                 key, sql_symbol_map[symbol], value))
@@ -262,6 +271,7 @@ class TableDB(BaseDB):
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
         try:
+            print(count_sql)
             total = self.exec_for_sql(count_sql)[0]['count(*)']
             data = self.exec_for_sql(sql)
         except DBError as e:
