@@ -271,7 +271,6 @@ class TableDB(BaseDB):
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
         try:
-            print(count_sql)
             total = self.exec_for_sql(count_sql)[0]['count(*)']
             data = self.exec_for_sql(sql)
         except DBError as e:
