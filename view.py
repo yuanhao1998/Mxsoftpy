@@ -499,7 +499,7 @@ class View:
 
         meth = getattr(self, self.request.request_type.lower(), None)
 
-        if meth is None and self.request.request_type == "HEAD":
+        if meth is None and self.request.request_type == "head":
             meth = getattr(self, "get", None)
 
         if not meth:

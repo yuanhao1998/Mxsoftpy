@@ -2,6 +2,7 @@
 # @Create   : 2021/9/18 14:22
 # @Author   : yh
 # @Remark   : 存放消息队列的操作方法
+import logging
 import multiprocessing
 import platform
 from collections import namedtuple
@@ -11,6 +12,8 @@ from .BaseDB import BaseDB
 from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ, BS_TIMER_INFINITE
 from .db_def.def_type import type_map
 from .exception import DBError, DataError
+
+logger = logging.getLogger('bs')
 
 
 class MQ(BaseDB):
@@ -38,7 +41,6 @@ class MQ(BaseDB):
         flag = flag or BSMQ_OT_COMMONMQ
 
         try:
-            # self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag, host, port)
             self.exec_handle('bs_mq_reopen', name, pwd, open_flag, flag)
         except DBError:
             if getattr(self, '_handle', 0):

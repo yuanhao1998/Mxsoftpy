@@ -10,6 +10,8 @@ class Model(BaseModel):
     暂时没有要添加或重写的方法，但是先预留出来
     """
 
-    @classmethod
-    def get_fields(cls):
-        pass
+    def save(self):
+        """
+        保存数据
+        :return:
+        """
