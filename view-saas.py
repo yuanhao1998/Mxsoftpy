@@ -43,7 +43,7 @@ class SessionData:
         """
         if not self.cookie.get('mxsessionid') and request().config.version == 0:
             pass
-            #raise AuthError('获取session失败，请重新登录')
+            # raise AuthError('获取session失败，请重新登录')
         return self.cookie.get('mxsessionid', '')
 
     @property
@@ -199,20 +199,21 @@ class Request(SessionData):
                 self._headers[i[0].decode().lower()] = i[1].decode()
             return self._headers
 
-    def mx_token_login(self, ip, token):
+    def mx_token_login(self, ip, token, tenant_id: str = ''):
         """
         免登录请求
         :param token:  SaaS token
         :param ip:  SaaS ip和端口
+        :param tenant_id:  SaaS 租户ID
         :return:
         """
         try:
             url = 'http://%s/mxtokenlogin.login' % ip
-            headers = {'token': token}
+            headers = {'token': token, 'tokencom': tenant_id}
             res = requests.get(url, headers=headers)
             print(url)
             print(res.text)
-            logging.error('请求得url='+url+'返回结果：'+res.text)
+            logging.debug('请求得url='+url+'返回结果：'+res.text)
             data = json.loads(res.text)
             if data['status'] != 'success':
                 raise AuthError(data['errmsg'])
@@ -241,16 +242,21 @@ class Request(SessionData):
                 cookie_dict[k] = v
             if flag is False and self.url.find('syn_info.sy') == -1:
                 header = self.headers
-                print(header)
+                logging.debug('请求得url=' + self.url + '头部信息' + json.dumps(header))
                 if header.get('token', None):
                     token = header['token']
                 else:
-                    raise AuthError('获取header中tkoen失败')
+                    raise AuthError('获取header中koen失败')
                 if header.get('ip', None):
                     host = header['ip']
                 else:
                     raise AuthError('获取header中ip失败')
-                cookie_dict['mxsessionid'] = self.mx_token_login(host, token)
+                if header.get('tenant', None):
+                    tenant_id = header['tenant']
+                else:
+                    logging.debug('获取同步接口中tenant失败')
+                    raise AuthError('获取header中tenant失败')
+                cookie_dict['mxsessionid'] = self.mx_token_login(host, token, tenant_id)
             self._cookie = cookie_dict
             return self._cookie
 
