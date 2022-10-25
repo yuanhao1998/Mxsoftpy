@@ -526,3 +526,6 @@ class SocketView(View):
 
     async def receive(self):
         return await self.request.receive_json()
+
+    async def close(self):
+        await self.request.close()
