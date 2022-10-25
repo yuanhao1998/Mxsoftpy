@@ -17,7 +17,7 @@ from pydantic import ValidationError
 
 from .base import BaseMx
 from .exception import NotFoundError, MxBaseException
-from .view import Request, Response
+from .view import Request, Response, MXWebSockets
 
 if t.TYPE_CHECKING:
     from .module import Module
@@ -87,7 +87,25 @@ class Mx(BaseMx):
             }
         )
         data = await response.data
-        await send({"type": "http.response.body", "body": bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data})
+        await send({"type": "http.response.body",
+                    "body": bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data})
+
+    async def full_dispatch_websocket(self, scope, receive, send):
+        """
+        处理asgi服务器的请求
+        """
+        self.session_handler = MXWebSockets(scope, receive, send)
+        await self.session_handler.accept()
+        try:
+            func = self.get_func()
+
+            if func:
+                await func(self.session_handler)
+            else:
+                raise NotFoundError(self.session_handler.url.path)
+        except Exception as e:
+            rv = self.handle_user_exception(e)
+            await self.session_handler.send_text(str(rv.res))
 
     async def preprocess_request(self):
         """
@@ -106,11 +124,13 @@ class Mx(BaseMx):
         """
 
         # 没有content-type时，设置默认的content-type
-        response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
+        response.request.headers[
+            'content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
         data = await response.data
-        response.request.headers["content-length"] = str(len(bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data))
+        response.request.headers["content-length"] = str(
+            len(bytes(str(data), encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:
@@ -130,8 +150,10 @@ class Mx(BaseMx):
         从url_map获取对应的函数
         :return:
         """
-
-        url = self.session_handler.url
+        try:
+            url = self.session_handler.url.path
+        except AttributeError:
+            url = self.session_handler.url
         if url is None:
             url = ''
         url = '/' + url if not url.startswith('/') else url
@@ -187,7 +209,12 @@ class Mx(BaseMx):
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        return await self.full_dispatch_request(scope, receive, send)
+        request_type = {"http": self.full_dispatch_request, "websocket": self.full_dispatch_websocket}
+        # return await self.full_dispatch_request(scope, receive, send)
+        if request_type.get(scope.get('type')):
+            return await request_type[scope["type"]](scope, receive, send)
+        else:
+            return None
 
     @staticmethod
     def load_cache():
@@ -216,7 +243,7 @@ class Mx(BaseMx):
         """
         reloader = Reloader()
         if os.environ.get('WAITRESS_RUN_MAIN') == 'true':
-            thread = threading.Thread(target=main_func, args=(self, ), kwargs=kwargs)
+            thread = threading.Thread(target=main_func, args=(self,), kwargs=kwargs)
             thread.setDaemon(True)
             thread.start()
             reloader.code_changed()

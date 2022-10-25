@@ -13,6 +13,7 @@ from io import BytesIO
 from urllib.parse import parse_qs
 
 import anyio
+from starlette.websockets import WebSocket
 
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
@@ -273,7 +274,7 @@ class Request(SessionData):
             async for chunk in self.stream():
                 chunks.append(chunk)
             try:
-                content_type = self.content_type.split(';')[0] if self.content_type\
+                content_type = self.content_type.split(';')[0] if self.content_type \
                     else 'application/x-www-form-urlencoded'
                 data = parse_dict.get(content_type)(b"".join(chunks) if content_type == 'multipart/form-data'
                                                     else b"".join(chunks).decode())
@@ -496,8 +497,10 @@ class View:
         """
         根据请求类型调用对应的类方法
         """
-
-        meth = getattr(self, self.request.request_type.lower(), None)
+        try:
+            meth = getattr(self, self.request.request_type.lower(), None)
+        except AttributeError:
+            meth = getattr(self, "websocket", None)
 
         if meth is None and self.request.request_type == "head":
             meth = getattr(self, "get", None)
@@ -506,3 +509,20 @@ class View:
             raise HTTPMethodError(self.request.request_type)
 
         return await meth() if iscoroutinefunction(meth) else await run_in_threadpool(meth)
+
+
+class MXWebSockets(WebSocket):
+    @property
+    def callback(self) -> str:
+        return ""
+
+
+class SocketView(View):
+    async def send_json(self, data):
+        await self.request.send_json(data)
+
+    async def send(self, data):
+        await self.request.send_text(str(data))
+
+    async def receive(self):
+        return await self.request.receive_json()
