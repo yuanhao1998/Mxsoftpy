@@ -110,7 +110,7 @@ class TreeDB(BaseDB):
                 try:
                     _host, _port = self._get_host_port(main_key)
                     host, port = host or _host, port or _port
-                    self.__chl = CBSHandleLoc()
+                    self._chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
                 except DBError as e:
@@ -125,7 +125,7 @@ class TreeDB(BaseDB):
                     try:
                         _host, _port = self._get_host_port(main_key)
                         host, port = host or _host, port or _port
-                        self.__chl = CBSHandleLoc()
+                        self._chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     except DBError as e:
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)

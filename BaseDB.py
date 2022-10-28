@@ -60,16 +60,19 @@ class BaseDB:
         msg = res[0] if isinstance(res, tuple) else res
         if msg != BS_NOERROR:
             frame = currentframe()
-            if not self.open_func_dict.get(frame.f_back.f_locals.get('operate')):
-                logging.error('错误参数：%s' % str(frame.f_back.f_locals))
-                max_depth = 100
-                while getattr(frame, 'f_back'):
-                    frame = frame.f_back
-                    logging.debug('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
-                    max_depth -= 1
-                    if max_depth < 0:
-                        logging.debug('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
-                        break
+            try:
+                if not self.open_func_dict.get(frame.f_back.f_locals.get('operate')):
+                    logging.error('错误参数：%s' % str(frame.f_back.f_locals))
+                    max_depth = 100
+                    while getattr(frame, 'f_back'):
+                        frame = frame.f_back
+                        logging.debug('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
+                        max_depth -= 1
+                        if max_depth < 0:
+                            logging.debug('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
+                            break
+            finally:
+                del frame
             raise DBError(msg)
         if res:
             return res[1] if len(res) == 2 else res[1:]
@@ -241,7 +244,7 @@ class BaseDB:
             try:
                 host = request().config.HOST
                 port = request().config.PORT
-            except (ModuleNotFoundError, ImportError, AttributeError):
+            except BaseException:
                 host = '127.0.0.1'
                 port = 8123
         return host, port
