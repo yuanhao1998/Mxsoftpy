@@ -87,7 +87,7 @@ class Mx(BaseMx):
             }
         )
         data = await response.data
-        await send({"type": "http.response.body", "body": bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data})
+        await send({"type": "http.response.body", "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -110,7 +110,7 @@ class Mx(BaseMx):
         for after_func in self.after_request_funcs:
             response = after_func(response)
         data = await response.data
-        response.request.headers["content-length"] = str(len(bytes(json.dumps(data), encoding='utf-8') if not isinstance(data, bytes) else data))
+        response.request.headers["content-length"] = str(len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:
