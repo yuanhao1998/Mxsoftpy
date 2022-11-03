@@ -60,7 +60,7 @@ class SessionData:
                     self._company = company
                     return self._company
                 else:
-                    logging.error('GetSessionCompany返回码异常：%s, 获取公司失败' % flag)
+                    logging.error('GetSessionCompany返回码异常：%s, 获取公司失败, sessionid: %s' % (flag, self.session_id))
                     raise AuthError('session异常, 获取公司失败')
             else:
                 return 'Co_1'
@@ -80,7 +80,7 @@ class SessionData:
                     self._user = user
                     return self._user
                 else:
-                    logging.error('GetSessionUserId返回码异常：%s, 获取用户失败' % flag)
+                    logging.error('GetSessionUserId返回码异常：%s, 获取用户失败，sessionid: %s' % (flag, self.session_id))
                     raise AuthError('session异常, 获取用户失败')
             else:
                 return request().headers.get('userid', '')
@@ -99,7 +99,7 @@ class SessionData:
                 if flag == 0 or flag is True:
                     self._user_group = user_group
                 else:
-                    logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败' % flag)
+                    logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败, sessionid: %s' % (flag, self.session_id))
                     raise AuthError('session异常, 获取用户组失败')
             else:
                 self._user_group = ''
