@@ -323,7 +323,10 @@ class Request(SessionData):
             if not self.allowed_file(file.get('filename')):
                 raise FileError('不支持的文件类型: %s' % file.get('filename'))
 
-            with open(os.path.join(path or self.config.TMP_DIR, file.get('filename')), 'wb') as f:
+            path = path or self.config.TMP_DIR
+            if not os.path.exists(path):
+                os.makedirs(path)
+            with open(os.path.join(path, file.get('filename')), 'wb') as f:
                 f.write(file['data'])
             res.append(file)
         return res[0] if len(res) == 1 else res
