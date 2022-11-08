@@ -6,6 +6,7 @@ import json
 import logging
 from typing import Union, Any, List, Type
 from inspect import currentframe
+import os
 
 from superbsapi import *
 from mxsoftpy import Model
@@ -17,7 +18,6 @@ from .globals import request
 
 
 class BaseDB:
-
     port = None
     host = None
 
@@ -184,10 +184,12 @@ class BaseDB:
                     data_list.append({'name': field.name, 'value': getattr(items, field.name),
                                       'valuetype': type_map[field.type_.__name__]})
                 else:
-                    raise DataError('不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
+                    raise DataError(
+                        '不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
 
         else:
-            raise DataError('生成符合数据库插入格式的数据时，传入错误的数据类型：%s，items应为items、dict或Model' % type(items).__name__)
+            raise DataError('生成符合数据库插入格式的数据时，传入错误的数据类型：%s，items应为items、dict或Model' % type(
+                items).__name__)
 
         return data_list
 
@@ -272,8 +274,25 @@ class BaseDB:
                 if ret == BS_NOERROR:
                     data = json.loads(data)
                     return data.get('host'), data.get('port')
-                logging.debug('调用c++方法获取设备所属ts的host、port失败，将使用默认配置，错误码：%s，错误信息：%s' % (ret, str(data)))
+                logging.debug(
+                    '调用c++方法获取设备所属ts的host、port失败，将使用默认配置，错误码：%s，错误信息：%s' % (ret, str(data)))
             except Exception as e:
                 logging.debug('自动获取监测点表的host、port失败，将使用默认配置，错误详情：%s' % str(e))
 
         return self._get_host_port(key)
+
+    def backup_file(self, file, backup_path: str, file_type, host, port, del_exist=True):
+        """
+        保备份数据文件
+        :param file: 数据库文件名称
+        :param backup_path: 要备份到什么位置
+        :param file_type: 备份的类型 1-MQ, 2-TreeDB, 3-TableDB, 5-TimeSeriesDB
+        :param host: ip
+        :param port: 端口
+        :param del_exist: 是否删除已有的备份
+        :return: 没有返回值
+        """
+        if not backup_path.endswith("\\") or backup_path.endswith("/"):
+            backup_path += os.path.sep
+
+        self.exec2("bs_system_backup_file", file_type, file, backup_path, del_exist, host, port)

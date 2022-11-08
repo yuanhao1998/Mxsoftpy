@@ -526,4 +526,16 @@ class TreeDB(BaseDB):
         :return: 没有返回值
         """
         return self.exec_bs('DBPropertyTransferSaveFile', prop_name, file_path)
-    
+
+    def backup_database(self, file, backup_path, host="127.0.0.1", port=8123, del_exist=True):
+        """
+        备份数据库
+        :param file: 备份的文件
+        :param backup_path: 备份的路径
+        :param host: ip
+        :param port: 端口
+        :param del_exist: 是都删除以存在的
+
+        :return: 没有返回值
+        """
+        return self.backup_file(file, backup_path, 2, host, port, del_exist)
