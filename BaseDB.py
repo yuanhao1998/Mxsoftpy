@@ -62,6 +62,7 @@ class BaseDB:
             frame = currentframe()
             try:
                 if not self.open_func_dict.get(frame.f_back.f_locals.get('operate')):
+                    logging.error('数据库返回的错误码及错误信息：%s' % str(res))
                     logging.error('错误参数：%s' % str(frame.f_back.f_locals))
                     max_depth = 100
                     while getattr(frame, 'f_back'):

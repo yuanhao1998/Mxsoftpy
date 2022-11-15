@@ -78,7 +78,7 @@ class TreeDB(BaseDB):
         self.exec_bs('bs_treedb_get_index_names', index_list)
         return index_list
 
-    def open(self, main_key: str, sub_key: str = None, host: str = None, file: str = None,
+    def open(self, main_key: str = None, sub_key: str = None, host: str = None, file: str = None,
              main_key_pwd: str = '', flag: int = None, port: int = None, path_flag: bool = False) -> "TreeDB":
         """
         打开数据库键 [只打开主键或子键 / 同时打开主键和子键（子键路径）]
@@ -100,22 +100,23 @@ class TreeDB(BaseDB):
         if not flag:
             if sub_key:
                 flag = TRDB_OPKF_OPENEXIST if '\\' in sub_key else TRDB_OPKF_OPENEXIST | TRDB_OPKF_DOTPATH
-            else:
+            elif main_key:
                 flag = TRDB_OPKF_OPENEXIST if '\\' in main_key else TRDB_OPKF_OPENEXIST | TRDB_OPKF_DOTPATH
+
+        _host, _port = self._get_host_port(main_key or file)
+        host, port = host or _host, port or _port
 
         if sub_key:
             try:
                 self.exec_tree('Treedb_ReopenMainKey', sub_key, flag, path_flag, main_key, main_key_pwd, file)
             except DBError:
                 try:
-                    _host, _port = self._get_host_port(main_key)
-                    host, port = host or _host, port or _port
                     self._chl = CBSHandleLoc()
                     self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     self.exec_tree('Treedb_ReopenSubKey', sub_key, flag)
                 except DBError as e:
                     raise DBError(e.err_code, '打开主键[%s]-子键[%s]时' % (main_key, sub_key))
-        else:
+        elif main_key:
             try:
                 self.exec_tree('Treedb_ReopenSubKey', main_key, flag)
             except DBError:
@@ -123,12 +124,12 @@ class TreeDB(BaseDB):
                     self.exec_tree('Treedb_ReopenMainKey', '', flag, path_flag, main_key, main_key_pwd, file)
                 except DBError:
                     try:
-                        _host, _port = self._get_host_port(main_key)
-                        host, port = host or _host, port or _port
                         self._chl = CBSHandleLoc()
                         self.exec_tree('Treedb_Alloc', host, file, main_key, main_key_pwd, TRDB_OPKF_OPENEXIST, port)
                     except DBError as e:
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
+        else:
+            self.exec1('bs_treedb_open_sql_session', host, port, file, main_key_pwd)
         return self
 
     @classmethod
@@ -539,3 +540,14 @@ class TreeDB(BaseDB):
         :return: 没有返回值
         """
         return self.backup_file(file, backup_path, 2, host, port, del_exist)
+
+    def exec_for_sql(self, sql: str):
+        """
+        根据sql查询数据
+        :param sql: 查询sql
+        """
+
+        res_handle = self.exec_handle('bs_treedb_execute_sql', sql)[0]
+        res_info = self.exec2('bs_treedb_sql_result_get_info', res_handle)
+        data = self.exec2('bs_treedb_sql_result_get_all', res_handle)
+        return res_info['num_entities'], res_info['select_total_num_rows'], data
