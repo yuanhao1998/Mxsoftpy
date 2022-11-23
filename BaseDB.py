@@ -42,6 +42,7 @@ class BaseDB:
         """
         if getattr(self, '_handle', 0):
             bs_close_handle(self._handle)
+            del self._handle
 
     @property
     def handle(self):
