@@ -161,7 +161,13 @@ class TableDB(BaseDB):
         """
         self.__table = table_name or self.__table
         res1, res2 = dict(), dict()
-        self.exec_bs('bs_tabledb_get_dyn_and_lastrd', self.__table, res1, res2)
+        try:
+            self.exec_bs('bs_tabledb_get_dyn_and_lastrd', self.__table, res1, res2)
+        except DBError as e:
+            if e.err_code in [288, 1012]:
+                return {}
+            else:
+                raise e
         return res2
 
     def exec_for_sql(self, sql: str) -> List[dict]:
@@ -281,7 +287,7 @@ class TableDB(BaseDB):
             total = self.exec_for_sql(count_sql)[0]['count(*)']
             data = self.exec_for_sql(sql)
         except DBError as e:
-            if e.err_code == 288:  # 错误码288意思是表为空，不应该报错
+            if e.err_code in [288, 1012]:  # 错误码288、1012意思是表为空，不应该报错
                 total, data = 0, []
             else:
                 raise e
