@@ -10,6 +10,7 @@ from superbsapi import CBSHandleLoc
 
 from . import Model
 from .BaseDB import BaseDB
+from .db_def.def_table import TBDB_DT_RS
 from .db_def.def_type import type_map, type_c_python, type_c_str
 from .exception import DBError, DataError
 
@@ -90,7 +91,8 @@ class TableDB(BaseDB):
         field_list = list()
         for field in model.__fields__.values():
             if not type_map.get(field.type_.__name__):
-                raise DataError('不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
+                raise DataError(
+                    '不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
 
             field_list.append({"name": field.name, "uType": type_map[field.type_.__name__],
                                "uDataLen": field.type_.max_length if hasattr(field.type_, 'max_length') else 200})
@@ -210,6 +212,17 @@ class TableDB(BaseDB):
 
         return self.exec_for_sql(sql)
 
+    def delete_table(self, table_name: str = None, flag=TBDB_DT_RS):
+        """
+        删除table表
+        :param table_name: table名称
+        :param flag: 删除模式
+        :return:
+        """
+        if not table_name and self.__table:
+            raise DBError(1, '未指定要删除的table')
+        return self.exec_bs('bs_tabledb_delete_table', table_name or self.__table, flag)
+
     def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1, is_desc=False,
                default_expression=None, count: int = None, **kwargs) -> tuple:
         """
@@ -233,7 +246,8 @@ class TableDB(BaseDB):
         for key, value in kwargs.items():
             try:
                 key, symbol = key.rsplit('__', 1)
-                assert symbol in sql_symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (str([i for i in sql_symbol_map]), symbol)
+                assert symbol in sql_symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (
+                str([i for i in sql_symbol_map]), symbol)
             except ValueError:
                 symbol = 'e'
 
@@ -259,7 +273,7 @@ class TableDB(BaseDB):
             print(value)
             query_list.append(
                 "%s %s %s" % (
-                key, sql_symbol_map[symbol], value))
+                    key, sql_symbol_map[symbol], value))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
