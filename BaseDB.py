@@ -266,7 +266,10 @@ class BaseDB:
         判断当前table应该连接的数据库
         :param key: 要打开的table
         """
-        from index import _
+        try:
+            from index import _
+        except (ImportError, ModuleNotFoundError):
+            _ = str
         if key and key.find('.SubMonitor.') != -1:  # 判断是否为监测点表
             from opm_pyirm import GetDeviceDBGroupInfo
 
