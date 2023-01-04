@@ -4,8 +4,8 @@
 # @Remark   : session处理类
 import cgi
 import functools
-import logging
 import json
+import logging
 import os
 import typing as t
 from asyncio import iscoroutinefunction
@@ -18,6 +18,8 @@ from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request
 from .parse import scope_to_environ
+
+NO_SESSION = 0  # 配置是否免密登陆
 
 
 class SessionData:
@@ -41,9 +43,12 @@ class SessionData:
         """
         获取session id
         """
-        if not self.cookie.get('mxsessionid') and request().config.version == 0:
-            raise AuthError('获取session失败，请重新登录')
-        return self.cookie.get('mxsessionid', '')
+        if NO_SESSION:
+            return self.cookie.get('mxsessionid', '')
+        else:
+            if not self.cookie.get('mxsessionid') and request().config.version == 0:
+                raise AuthError('获取session失败，请重新登录')
+            return self.cookie.get('mxsessionid', '')
 
     @property
     def company(self) -> str:
@@ -53,17 +58,20 @@ class SessionData:
         if self._company:
             return self._company
         else:
-            if request().config.version == 0:
-                from py_opm_wm_bm import GetSessionCompany
-                flag, company = GetSessionCompany(self.session_id)
-                if flag == 0 or flag is True:
-                    self._company = company
-                    return self._company
-                else:
-                    logging.error('GetSessionCompany返回码异常：%s, 获取公司失败, sessionid: %s' % (flag, self.session_id))
-                    raise AuthError('session异常, 获取公司失败')
-            else:
+            if NO_SESSION:
                 return 'Co_1'
+            else:
+                if request().config.version == 0:
+                    from py_opm_wm_bm import GetSessionCompany
+                    flag, company = GetSessionCompany(self.session_id)
+                    if flag == 0 or flag is True:
+                        self._company = company
+                        return self._company
+                    else:
+                        logging.error('GetSessionCompany返回码异常：%s, 获取公司失败, sessionid: %s' % (flag, self.session_id))
+                        raise AuthError('session异常, 获取公司失败')
+                else:
+                    return 'Co_1'
 
     @property
     def user(self) -> str:
@@ -73,17 +81,20 @@ class SessionData:
         if self._user:
             return self._user
         else:
-            if request().config.version == 0:
-                from py_opm_wm_bm import GetSessionUserId
-                flag, user = GetSessionUserId(self.session_id)
-                if flag == 0 or flag is True:
-                    self._user = user
-                    return self._user
-                else:
-                    logging.error('GetSessionUserId返回码异常：%s, 获取用户失败，sessionid: %s' % (flag, self.session_id))
-                    raise AuthError('session异常, 获取用户失败')
+            if NO_SESSION:
+                return '1'
             else:
-                return request().headers.get('userid', '')
+                if request().config.version == 0:
+                    from py_opm_wm_bm import GetSessionUserId
+                    flag, user = GetSessionUserId(self.session_id)
+                    if flag == 0 or flag is True:
+                        self._user = user
+                        return self._user
+                    else:
+                        logging.error('GetSessionUserId返回码异常：%s, 获取用户失败，sessionid: %s' % (flag, self.session_id))
+                        raise AuthError('session异常, 获取用户失败')
+                else:
+                    return request().headers.get('userid', '')
 
     @property
     def user_group(self) -> str:
@@ -93,18 +104,21 @@ class SessionData:
         if self._user_group:
             return self._user_group
         else:
-            if request().config.version == 0:
-                from py_opm_wm_bm import GetSessionUserGroupId
-                flag, user_group = GetSessionUserGroupId(self.session_id)
-                if flag == 0 or flag is True:
-                    self._user_group = user_group
-                else:
-                    logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败, sessionid: %s' % (flag, self.session_id))
-                    raise AuthError('session异常, 获取用户组失败')
+            if NO_SESSION:
+                return '1'
             else:
-                self._user_group = ''
+                if request().config.version == 0:
+                    from py_opm_wm_bm import GetSessionUserGroupId
+                    flag, user_group = GetSessionUserGroupId(self.session_id)
+                    if flag == 0 or flag is True:
+                        self._user_group = user_group
+                    else:
+                        logging.error('GetSessionUserGroupId返回码异常：%s, 获取用户组失败, sessionid: %s' % (flag, self.session_id))
+                        raise AuthError('session异常, 获取用户组失败')
+                else:
+                    self._user_group = ''
 
-            return self._user_group
+                return self._user_group
 
     @property
     def account(self) -> str:
@@ -148,14 +162,17 @@ class SessionData:
         if isinstance(self._is_admin, tuple):
             return self._is_admin[1]
         else:
-            if request().config.version == 0:
-                from db.public.Setting.user import UserGroupCache
-                group_info = UserGroupCache().items(request().user_group)
-                self._is_admin = (1, group_info.get('is_admin'))
+            if NO_SESSION:
+                return True
             else:
-                from db.customer.Cloudwise.user import DubboUser
-                self._is_admin = (1, DubboUser().check_admin())
-            return self._is_admin[1]
+                if request().config.version == 0:
+                    from db.public.Setting.user import UserGroupCache
+                    group_info = UserGroupCache().items(request().user_group)
+                    self._is_admin = (1, group_info.get('is_admin'))
+                else:
+                    from db.customer.Cloudwise.user import DubboUser
+                    self._is_admin = (1, DubboUser().check_admin())
+                return self._is_admin[1]
 
 
 class Request(SessionData):
@@ -207,12 +224,15 @@ class Request(SessionData):
         else:
             cookie_dict = dict()
 
-            for cookie in self.headers.get('cookie', '').split('; '):
-                try:
-                    k, v = cookie.split('=', 1)
-                except ValueError:
-                    raise AuthError('没有cookie')
-                cookie_dict[k] = v
+            if NO_SESSION:
+                pass
+            else:
+                for cookie in self.headers.get('cookie', '').split('; '):
+                    try:
+                        k, v = cookie.split('=', 1)
+                    except ValueError:
+                        raise AuthError('没有cookie')
+                    cookie_dict[k] = v
 
             self._cookie = cookie_dict
             return self._cookie
