@@ -16,10 +16,14 @@ import anyio
 
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
-from .globals import request
+from .globals import request, config
 from .parse import scope_to_environ
 
-NO_SESSION = 0  # 配置是否免密登陆
+# noinspection PyBroadException
+try:
+    NO_SESSION = int(config().middle.main.NoSession)
+except Exception:
+    NO_SESSION = 0
 
 
 class SessionData:
