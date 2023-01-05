@@ -187,7 +187,6 @@ class Mx(BaseMx):
         处理请求
         将所有处理放在其它方法中，方便他人进行中间件重写
         """
-        pass
         return await self.full_dispatch_request(scope, receive, send)
 
     @staticmethod
