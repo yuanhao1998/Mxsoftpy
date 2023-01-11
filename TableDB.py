@@ -79,12 +79,12 @@ class TableDB(BaseDB):
         self.exec_bs('bs_tabledb_get_fields', table, res)
         return {i['name']: i for i in res}
 
-    def create_table(self, table: str, model: Type[Model], flag=None, **kwargs) -> None:
+    def create_table(self, table: str, model: Type[Model], flag, **kwargs) -> None:
         """
         新建表
         :param table: 要创建的数据库名称
         :param model: 要创建的表，如果您不显式的声明字段长度，则默认长度为200
-        :param flag: 创建风格，不传会自动判断
+        :param flag: 创建风格
         :param kwargs: 附加参数
         """
 
@@ -93,9 +93,16 @@ class TableDB(BaseDB):
             if not type_map.get(field.type_.__name__):
                 raise DataError(
                     '不支持此解析字段的类型，字段名: %s, 解析到的类型: %s' % (field.name, field.type_.__name__))
+            temp = {"name": field.name, "uType": type_map[field.type_.__name__], 'uFlag': 0,
+                               "uDataLen": field.type_.max_length if hasattr(field.type_, 'max_length') else 0}
+            if kwargs.get(field.name):
+                if isinstance(kwargs[field.name], dict):
+                    temp.update(kwargs[field.name])
+                elif isinstance(kwargs[field.name], list):
+                    for i in kwargs[field.name]:
+                        temp.update(i)
 
-            field_list.append({"name": field.name, "uType": type_map[field.type_.__name__],
-                               "uDataLen": field.type_.max_length if hasattr(field.type_, 'max_length') else 200})
+            field_list.append(temp)
 
         self.exec_bs('bs_tabledb_create_table', table, field_list, flag)
 
