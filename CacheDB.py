@@ -78,8 +78,8 @@ class CacheDB(BaseDB):
                 bs_close_handle(self._handle)
             try:
                 self.exec1('bs_memdb_open', db or self._get_file(),
-                             TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
-                             file, host or _host, port or _port)
+                           TRDB_OPKF_CREATEMAINKEY if path_flag else TRDB_OPKF_OPENEXIST,
+                           file, host or _host, port or _port)
             except DBError as e:
                 raise DBError(e.err_code, '打开Cache数据库失败')
 

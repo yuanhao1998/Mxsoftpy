@@ -5,8 +5,6 @@
 
 import typing as t
 
-from mxsoftpy.globals import request
-
 
 class BaseMx:
 

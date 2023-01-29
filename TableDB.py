@@ -273,11 +273,8 @@ class TableDB(BaseDB):
 
             if sql_symbol_map[symbol] == 'between':
                 value = value
-                print(1)
             else:
-                print(2)
                 value = value if type(value).__name__ != 'str' else '\'' + value + '\''
-            print(value)
             query_list.append(
                 "%s %s %s" % (
                     key, sql_symbol_map[symbol], value))
