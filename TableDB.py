@@ -34,6 +34,7 @@ class TableDB(BaseDB):
     def __init__(self, host=None, port=None):
         super().__init__(host, port)
         self.__table = None
+        self.__now = {'file': None, 'host': None, 'port': None}
 
     def open(self, file: str = None, table: str = None, host: str = None, port: int = None):
         """
@@ -47,12 +48,19 @@ class TableDB(BaseDB):
         file = file or self._get_file()
 
         try:
-            self.exec_tree('Tabledb_ReopenDb', file)
+            if host in (self.__now['host'], None) and port in (self.__now['port'], None):
+                if self.__now['file'] == file:
+                    pass
+                else:
+                    self.exec_tree('Tabledb_ReopenDb', file)
+            else:
+                raise DBError(1)
         except DBError:
             try:
                 _host, _port = self._get_table_host_port(table)
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host or _host, file, port or _port)
+                self.__now.update({'file': file, 'host': host or _host, 'port': port or _port})
             except DBError as e:
                 raise DBError(e.err_code, '打开数据库[%s]失败' % file)
 

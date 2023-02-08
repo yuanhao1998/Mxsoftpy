@@ -7,6 +7,8 @@ import functools
 import json
 import logging
 import os
+import random
+import string
 import typing as t
 from asyncio import iscoroutinefunction
 from io import BytesIO
@@ -350,6 +352,8 @@ class Request(SessionData):
             path = path or self.config.TMP_DIR
             if not os.path.exists(path):
                 os.makedirs(path)
+            while os.path.exists(os.path.join(path, file['filename'])):
+                file['filename'] = file['filename'] + ''.join(random.sample(string.ascii_letters + string.digits, 8))
             with open(os.path.join(path, file.get('filename')), 'wb') as f:
                 f.write(file['data'])
             res.append(file)

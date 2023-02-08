@@ -396,6 +396,7 @@ class TreeDB(BaseDB):
             if symbol == 'in':
                 assert isinstance(value, list), '查询格式错误！正确示例：a__in=[1, 3, 4, 5]'
                 assert len(value) != 0, '使用in时列表不能为空'
+                value = list(set(value))
                 temp['vInValues'] = temp['value']
                 temp['value_type'] = type(value[0]).__name__
                 expression_list.append(' %s ' % i)
