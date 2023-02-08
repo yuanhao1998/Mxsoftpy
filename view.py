@@ -353,7 +353,7 @@ class Request(SessionData):
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            max_loop = 50
+            max_loop = 10
             while os.path.exists(os.path.join(path, file['filename'])) and max_loop > 0:
                 file['filename'] = file['filename'] + ''.join(random.sample(string.ascii_letters + string.digits, 8))
                 max_loop -= 1
