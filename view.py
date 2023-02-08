@@ -352,8 +352,12 @@ class Request(SessionData):
             path = path or self.config.TMP_DIR
             if not os.path.exists(path):
                 os.makedirs(path)
-            while os.path.exists(os.path.join(path, file['filename'])):
+
+            max_loop = 50
+            while os.path.exists(os.path.join(path, file['filename'])) and max_loop > 0:
                 file['filename'] = file['filename'] + ''.join(random.sample(string.ascii_letters + string.digits, 8))
+                max_loop -= 1
+
             with open(os.path.join(path, file.get('filename')), 'wb') as f:
                 f.write(file['data'])
             res.append(file)
