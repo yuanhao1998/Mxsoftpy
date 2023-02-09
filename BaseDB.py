@@ -271,7 +271,11 @@ class BaseDB:
 
             device = key.split('.', 1)[0]
             try:
-                ret, data = GetDeviceDBGroupInfo(request().session_id, device)
+                # TODO 临时捕获异常，支持两种模式，等后续稳定版本
+                try:
+                    ret, data = GetDeviceDBGroupInfo(request().company, device)
+                except Exception:
+                    ret, data = GetDeviceDBGroupInfo(request().session_id, device)
                 if ret == BS_NOERROR:
                     data = json.loads(data)
                     return data.get('host'), data.get('port')
