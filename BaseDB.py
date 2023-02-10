@@ -274,6 +274,8 @@ class BaseDB:
                 # TODO 临时捕获异常，支持两种模式，等后续稳定版本
                 try:
                     ret, data = GetDeviceDBGroupInfo(request().company, device)
+                    if ret != BS_NOERROR:
+                        raise
                 except Exception:
                     ret, data = GetDeviceDBGroupInfo(request().session_id, device)
                 if ret == BS_NOERROR:
