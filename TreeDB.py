@@ -305,7 +305,7 @@ class TreeDB(BaseDB):
 
         return self.exec_bs('bs_treedb_insert_propertys', self._generation_items(items), overwrite) if items else 0
 
-    def insert_key_items(self, items: Union[List[tuple], dict], key: str = None) -> str:
+    def insert_key_items(self, items: Union[List[tuple], dict], key: str = None, insert_key: str = None) -> str:
         """
         批量插入子键及k,v
         eg: db.open('MXSE', '1.SD', file='ccubase').insert_key_items(
@@ -315,11 +315,17 @@ class TreeDB(BaseDB):
 
         :param items: 插入的数据, 如果元组传入三个元素，将第三个元素当作数据类型（见文首type_map），如果只传入两个，则自动获取数据类型
         :param key: 子键名称,不传自动生成
+        :param insert_key: 将子键作为一个属性自动插入，传入属性名，不传默认以 _id_ 作为属性名称，传入 "" 则不生成
         :return: 生成的子键
         """
 
-        return self.exec_bs('bs_treedb_insert_key_and_properties', key or '', TRDB_OPKF_OPENEXIST,
-                            self._generation_items(items), True) if items else 0
+        # TODO 暂时兼容两种写法，防止有的环境没有更新数据库，没有新的方法
+        try:
+            return self.exec_bs('bs_treedb_insert_key_and_properties_with_key_as_property', key or '', TRDB_OPKF_OPENEXIST,
+                                self._generation_items(items), True, insert_key or '_id_') if items else 0
+        except Exception:
+            return self.exec_bs('bs_treedb_insert_key_and_properties', key or '', TRDB_OPKF_OPENEXIST,
+                                self._generation_items(items), True) if items else 0
 
     def delete(self, keys: Union[list, str, None] = None) -> None:
         """
