@@ -355,11 +355,12 @@ class Request(SessionData):
 
             max_loop = 10
             while os.path.exists(os.path.join(path, file['filename'])) and max_loop > 0:
-                file['filename'] = file['filename'] + ''.join(random.sample(string.ascii_letters + string.digits, 8))
+                file['filename'] = ''.join(random.sample(string.ascii_letters + string.digits, 8)) + file['filename']
                 max_loop -= 1
 
             with open(os.path.join(path, file.get('filename')), 'wb') as f:
                 f.write(file['data'])
+                file['path'] = path
             res.append(file)
         return res[0] if len(res) == 1 else res
 
