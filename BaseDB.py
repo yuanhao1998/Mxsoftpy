@@ -92,7 +92,7 @@ class BaseDB:
         try:
             res = func(*args, **kwargs)
         except Exception as e:
-            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
             raise DBError(1)
         return self.return_value(res)
 
@@ -107,7 +107,7 @@ class BaseDB:
         try:
             res = eval(operate)(self._chl.GetConfHandle(), *args, **kwargs)
         except Exception as e:
-            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
             raise DBError(1)
         return self.return_value(res)
 
@@ -124,7 +124,7 @@ class BaseDB:
         try:
             res = func(*args, **kwargs)
         except Exception as e:
-            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
             raise DBError(1)
         return cls.return_value(res)
 
@@ -139,7 +139,7 @@ class BaseDB:
         try:
             res, self._handle = eval(operate)(*args, **kwargs)
         except Exception as e:
-            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
             raise DBError(1)
         return self.return_value(res)
 
@@ -154,7 +154,7 @@ class BaseDB:
         try:
             res = eval(operate)(*args, **kwargs)
         except Exception as e:
-            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
             raise DBError(1)
         return self.return_value(res)
 
@@ -170,7 +170,7 @@ class BaseDB:
             try:
                 res = eval(operate)(self._handle, *args, **kwargs)
             except Exception as e:
-                logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+                logging.error('执行数据库函数：%s发生错误，参数：args-%s，kwargs:%s，错误详情：%s' % (operate, str(args), str(kwargs), str(e)))
                 raise DBError(1)
         else:
             raise DBError(1, '找不到句柄，请先连接到数据库')
