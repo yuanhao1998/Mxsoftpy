@@ -89,7 +89,11 @@ class BaseDB:
         :return: 执行结果
         """
         func = getattr(self._chl, operate)
-        res = func(*args, **kwargs)
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            raise DBError(1)
         return self.return_value(res)
 
     def exec_bs(self, operate: str, *args: Any, **kwargs: Any) -> Any:
@@ -100,7 +104,11 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        res = eval(operate)(self._chl.GetConfHandle(), *args, **kwargs)
+        try:
+            res = eval(operate)(self._chl.GetConfHandle(), *args, **kwargs)
+        except Exception as e:
+            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            raise DBError(1)
         return self.return_value(res)
 
     @classmethod
@@ -113,7 +121,11 @@ class BaseDB:
         :return: 执行结果
         """
         func = getattr(CBSHandleLoc, operate)
-        res = func(*args, **kwargs)
+        try:
+            res = func(*args, **kwargs)
+        except Exception as e:
+            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            raise DBError(1)
         return cls.return_value(res)
 
     def exec1(self, operate: str, *args, **kwargs):
@@ -124,7 +136,11 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        res, self._handle = eval(operate)(*args, **kwargs)
+        try:
+            res, self._handle = eval(operate)(*args, **kwargs)
+        except Exception as e:
+            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            raise DBError(1)
         return self.return_value(res)
 
     def exec2(self, operate: str, *args, **kwargs):
@@ -135,7 +151,11 @@ class BaseDB:
         :param args kwargs: 函数所使用的变量
         :return: 执行结果
         """
-        res = eval(operate)(*args, **kwargs)
+        try:
+            res = eval(operate)(*args, **kwargs)
+        except Exception as e:
+            logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+            raise DBError(1)
         return self.return_value(res)
 
     def exec_handle(self, operate: str, *args, **kwargs):
@@ -147,7 +167,11 @@ class BaseDB:
         :return: 执行结果
         """
         if self._handle:
-            res = eval(operate)(self._handle, *args, **kwargs)
+            try:
+                res = eval(operate)(self._handle, *args, **kwargs)
+            except Exception as e:
+                logging.error('执行数据库函数：%s发生错误，参数：%s，错误详情：%s' % (operate, str(kwargs), str(e)))
+                raise DBError(1)
         else:
             raise DBError(1, '找不到句柄，请先连接到数据库')
         return self.return_value(res)
