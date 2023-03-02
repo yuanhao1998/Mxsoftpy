@@ -65,7 +65,7 @@ class Mx(BaseMx):
         self.session_handler = Request(scope, receive, send)
         self.session_handler.module_list = self.module_list
         self.session_handler.config = self.config
-        if scope.get('type') == 'http':
+        if scope.get('type') == 'http' and self.session_handler.request_type.lower() == 'post':
             self.session_handler.POST_PROP = await self.session_handler.POST_ASYNC
 
         request_context.set(self.session_handler)
@@ -164,6 +164,15 @@ class Mx(BaseMx):
 
         return Response('%s(%s)' % (self.session_handler.callback, error) if self.session_handler.callback else error,
                         self.session_handler)
+
+    def unknown_error_handler(self) -> Response:
+        """
+        未知错误处理
+        """
+        error_value = "发生了一些问题"
+        return Response('%s(%s)' % (
+            self.session_handler.callback, str(error_value)) if self.session_handler.callback else str(
+            error_value), self.session_handler, type="default")
 
     def handle_user_exception(self, e):
         """
