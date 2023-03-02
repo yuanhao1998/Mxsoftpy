@@ -10,6 +10,7 @@ import os
 import random
 import string
 import typing as t
+import warnings
 from asyncio import iscoroutinefunction
 from io import BytesIO
 from urllib.parse import parse_qs
@@ -368,6 +369,7 @@ class Request(SessionData):
         """
         文件上传，老的方法，不推荐使用此方法了
         """
+        warnings.warn("upload将被弃用，您可以使用upload_file", DeprecationWarning)
         file = self.upload_file(path)
         return file['filename']
 
