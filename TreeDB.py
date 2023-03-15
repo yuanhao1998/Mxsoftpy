@@ -321,7 +321,7 @@ class TreeDB(BaseDB):
         """
 
         # TODO 暂时兼容两种写法，防止有的环境没有更新数据库，没有新的方法
-        if getattr(superbsapi, "bs_treedb_insert_key_and_properties_with_key_as_property"):
+        if getattr(superbsapi, "bs_treedb_insert_key_and_properties_with_key_as_property", None):
             return self.exec_bs('bs_treedb_insert_key_and_properties_with_key_as_property', key or '', TRDB_OPKF_OPENEXIST,
                                 self._generation_items(items), True, insert_key or '_id_') if items else 0
         else:
