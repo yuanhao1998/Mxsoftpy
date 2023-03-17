@@ -519,6 +519,19 @@ class Response:
         return data
 
 
+class FileResponse(Response):
+
+    def __init__(self, data: t.Any, filename: str, *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
+        self.request.add_header('Content-Transfer-Encoding', 'binary')
+        self.request.add_header('Content-Type', 'application/force-download')
+        self.request.add_header('Content-Type', 'application/octet-stream')
+        self.request.add_header('Content-Type', 'application/download')
+        self.request.add_header('Content-Disposition', 'inline;filename=%s' % filename)
+        self.request.add_header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
+        self.request.add_header('Pragma', 'no-cache')
+
+
 async def run_in_threadpool(func, *args, **kwargs):
     if kwargs:
         func = functools.partial(func, **kwargs)
