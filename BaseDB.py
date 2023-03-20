@@ -290,7 +290,7 @@ class BaseDB:
         判断当前table应该连接的数据库
         :param key: 要打开的table
         """
-        if key and key.find('.SubMonitor.') != -1:  # 判断是否为监测点表
+        if key and key.find('.SubMonitor.') != -1 and not key.startswith('dedicated'):  # 判断是否为监测点表
             from opm_pyirm import GetDeviceDBGroupInfo
 
             device = key.split('.', 1)[0]
