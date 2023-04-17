@@ -87,7 +87,8 @@ class Mx(BaseMx):
             }
         )
         data = await response.data
-        await send({"type": "http.response.body", "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
+        await send({"type": "http.response.body",
+                    "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -106,11 +107,13 @@ class Mx(BaseMx):
         """
 
         # 没有content-type时，设置默认的content-type
-        response.request.headers['content-type'] = response.request.content_type or response.request.response_content_type
+        response.request.headers[
+            'content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
         data = await response.data
-        response.request.headers["content-length"] = str(len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
+        response.request.headers["content-length"] = str(
+            len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
         return response
 
     async def run_func(self) -> Response:
@@ -225,7 +228,7 @@ class Mx(BaseMx):
         """
         reloader = Reloader()
         if os.environ.get('WAITRESS_RUN_MAIN') == 'true':
-            thread = threading.Thread(target=main_func, args=(self, ), kwargs=kwargs)
+            thread = threading.Thread(target=main_func, args=(self,), kwargs=kwargs)
             thread.setDaemon(True)
             thread.start()
             reloader.code_changed()
