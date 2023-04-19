@@ -57,7 +57,9 @@ class TableDB(BaseDB):
                 raise DBError(1)
         except DBError:
             try:
-                _host, _port = self._get_table_host_port(table)
+                _host, _port = None, None
+                if not host or not port:
+                    _host, _port = self._get_table_host_port(table)
                 self.__chl = CBSHandleLoc()
                 self.exec_tree('Tabledb_Alloc', host or _host, file, port or _port)
                 self.__now.update({'file': file, 'host': host or _host, 'port': port or _port})
