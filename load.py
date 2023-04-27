@@ -29,7 +29,7 @@ class __LoadServerConfig:
 
             if not isfile(config):
                 continue
-            conf = ConfigParser()
+            conf = type("NewConfigParser", (ConfigParser,), dict(optionxform=lambda self, optionstr: optionstr))()
             try:
                 conf.read(config, encoding='gbk')
             except UnicodeDecodeError:
