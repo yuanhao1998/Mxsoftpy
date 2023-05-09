@@ -132,7 +132,7 @@ class SessionData:
         """
         获取登陆租户
         """
-        return request().headers.get('accountid')
+        return request().headers.get('accountid', '')
 
     @property
     def role(self) -> list:
