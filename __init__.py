@@ -8,7 +8,7 @@ from .main import Mx
 from .module import Module
 from .view import View, Response
 from .model import Model
-from .server import Server
+from .server import Server, AsyncServer
 from .TreeDB import TreeDB
 from .TableDB import TableDB
 from .mqDB import MQ
