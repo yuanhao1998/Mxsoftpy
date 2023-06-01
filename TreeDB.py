@@ -30,6 +30,12 @@ symbol_map = {
 
 class TreeDB(BaseDB):
 
+    def get_chl(self):
+        return self._chl
+
+    def get_handle(self):
+        return self._handle
+
     def begin(self) -> int:
         """
         开启事务
@@ -131,6 +137,20 @@ class TreeDB(BaseDB):
                         raise DBError(e.err_code, '打开主键[%s]时' % main_key)
         else:
             self.exec1('bs_treedb_open_sql_session', host, port, file, main_key_pwd)
+        return self
+
+    def open_sql_session(self, file: str = None, host: str = None, port: str = None, main_key_pwd: str = ''):
+        """
+        打开一个执行tree sql的连接
+        :param host: 主机名
+        :param file: 数据库名
+        :param main_key_pwd: 主键密码
+        :param port: 端口号
+        :return: 类对象
+        """
+        file = file or self._get_file()
+        _host, _port = self._get_host_port(file)
+        self.exec1('bs_treedb_open_sql_session', host or _host, port or _port, file, main_key_pwd)
         return self
 
     @classmethod
@@ -474,12 +494,23 @@ class TreeDB(BaseDB):
         :param __prop__: 要修改的属性
         :param __value__: 更新的值
         :param __value_type__: 更新的值类型，不传会自动获取
-
         """
+
         default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
         return self.exec_bs('bs_treedb_edit_property_by_condition', default_query_conditions,
                             default_expression or ' and '.join(expression_list),
                             __prop__, __value__, __value_type__ or type_map.get(type(__value__).__name__))
+
+    def filter_delete(self, default_expression=None, **kwargs):
+        """
+        根据属性删除符合条件的子键
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param kwargs: 传入的删除条件
+        """
+
+        default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
+        return self.exec_bs('bs_treedb_delete_subkey_by_condition', default_query_conditions,
+                            default_expression or ' and '.join(expression_list))
 
     def filter(self, page_size=0, page_index=1, order_by: Union[str, List[tuple]] = '', is_desc=False,
                default_expression=None, **kwargs) -> tuple:
@@ -494,6 +525,7 @@ class TreeDB(BaseDB):
         :param kwargs: 传入的查询条件
         :return: 总条数，查询结果
         """
+
         default_query_conditions, expression_list = self.__generate_filter_data(kwargs)
         res_list = list()
         if isinstance(order_by, str):
