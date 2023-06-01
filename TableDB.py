@@ -240,19 +240,9 @@ class TableDB(BaseDB):
             raise DBError(1, '未指定要删除的table')
         return self.exec_bs('bs_tabledb_delete_table', table_name or self.__table, flag)
 
-    def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1, is_desc=False,
-               default_expression=None, count: int = None, **kwargs) -> tuple:
-        """
-        table表筛选
-        :param prop_list: 筛选需查询的字段，不传查所有
-        :param table: 数据库表，不传默认使用open传入的table
-        :param default_expression: 手动传入条件关系，默认关系为 and
-        :param page_index: 第几页
-        :param page_size: 每页条数
-        :param is_desc: 是否反序  <！！！ 注意：数据库暂时不支持，此次仅暂时预留 ！！！>
-        :param count: 总条数
-        :param kwargs: 传入的查询条件
-        """
+    def __generate_filter_data(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
+                               is_desc=False, default_expression=None, count: int = None, **kwargs) -> tuple:
+
         prop = ','.join([str(i) for i in prop_list]) if isinstance(prop_list, list) else prop_list or '*'
 
         sql = f"select {prop} from {table or self.__table}"
@@ -264,7 +254,7 @@ class TableDB(BaseDB):
             try:
                 key, symbol = key.rsplit('__', 1)
                 assert symbol in sql_symbol_map, '查询操作错误！正确操作包含：%s，您的操作：%s' % (
-                str([i for i in sql_symbol_map]), symbol)
+                    str([i for i in sql_symbol_map]), symbol)
             except ValueError:
                 symbol = 'e'
 
@@ -311,6 +301,25 @@ class TableDB(BaseDB):
         elif page_size:
             sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
+        return count_sql, sql
+
+    def filter(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1, is_desc=False,
+               default_expression=None, count: int = None, **kwargs) -> tuple:
+        """
+        table表筛选
+        :param prop_list: 筛选需查询的字段，不传查所有
+        :param table: 数据库表，不传默认使用open传入的table
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param page_index: 第几页
+        :param page_size: 每页条数
+        :param is_desc: 是否反序  <！！！ 注意：数据库暂时不支持，此次仅暂时预留 ！！！>
+        :param count: 总条数
+        :param kwargs: 传入的查询条件
+        """
+
+        count_sql, sql = self.__generate_filter_data(table, prop_list, page_size, page_index, is_desc,
+                                                     default_expression, count, **kwargs)
+
         try:
             total = self.exec_for_sql(count_sql)[0]['count(*)']
             data = self.exec_for_sql(sql)
@@ -321,3 +330,30 @@ class TableDB(BaseDB):
                 raise e
 
         return min(count, total) if count else total, data
+
+    def filter_no_total(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
+                        is_desc=False, default_expression=None, count: int = None, **kwargs) -> list:
+        """
+        筛选，不返回符合条件的总条数
+        :param prop_list: 筛选需查询的字段，不传查所有
+        :param table: 数据库表，不传默认使用open传入的table
+        :param default_expression: 手动传入条件关系，默认关系为 and
+        :param page_index: 第几页
+        :param page_size: 每页条数
+        :param is_desc: 是否反序  <！！！ 注意：数据库暂时不支持，此次仅暂时预留 ！！！>
+        :param count: 总条数
+        :param kwargs: 传入的查询条件
+        """
+
+        _, sql = self.__generate_filter_data(table, prop_list, page_size, page_index, is_desc,
+                                             default_expression, count, **kwargs)
+
+        try:
+            data = self.exec_for_sql(sql)
+        except DBError as e:
+            if e.err_code in [288, 1012]:  # 错误码288、1012意思是表为空，不应该报错
+                data = []
+            else:
+                raise e
+
+        return data
