@@ -141,6 +141,8 @@ class SessionData:
         """
         if self._role:
             return self._role
+        elif request().config.version == 0:
+            return []
         else:
             from db.customer.Cloudwise.user import DubboUser
             role_data = DubboUser().role_info()
@@ -154,6 +156,8 @@ class SessionData:
         """
         if self._role_filter:
             return self._role_filter
+        elif request().config.version == 0:
+            return []
         else:
             from db.customer.Cloudwise.user import DubboUser
             role_data = DubboUser().role_info()
@@ -307,6 +311,8 @@ class Request(SessionData):
             except TypeError:
                 raise DataError(
                     '不支持的body参数类型: %s，目前支持的类型(%s)' % (self.content_type, ','.join(parse_dict.keys())))
+            except json.decoder.JSONDecodeError:
+                raise DataError('请求body的参数无法json解析')
             self._POST = data
             return self._POST
 
@@ -344,6 +350,10 @@ class Request(SessionData):
         :param path: 上传路径, 不传使用默认配置
         """
         res = []
+        path = path or self.config.TMP_DIR
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         for file in self._POST:
             if not file.get('filename'):
                 continue
@@ -409,7 +419,6 @@ class Request(SessionData):
         """
         解析json
         """
-        json_data = json.loads(post_data)
 
         def _dumps_json(j_data):
 
@@ -444,8 +453,8 @@ class Request(SessionData):
                         j_data[key] = _dumps_json(j_data[key])
                 return j_data
 
-        json_data = _dumps_json(json_data)
-        return json_data
+        # json_data = _dumps_json(json_data)
+        return json.loads(post_data)
 
     @property
     def content_type(self):
