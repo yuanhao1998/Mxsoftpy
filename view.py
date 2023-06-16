@@ -16,6 +16,7 @@ from io import BytesIO
 from urllib.parse import parse_qs
 
 import anyio
+import requests
 
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
@@ -89,7 +90,14 @@ class SessionData:
             return self._user
         else:
             if NO_SESSION:
-                return '1'
+                res = requests.get("http://127.0.0.1/tarsier-vmdb/cmv/integration/authority/getCurUser?tk=%s" % request().headers.get('tk', ''))
+                try:
+                    data = res.json()
+                except Exception:
+                    raise AuthError('登录失败')
+                if data.get('code') != '-1':
+                    raise AuthError('登录过期')
+                return data.get('data', {}).get('userCode')
             else:
                 if request().config.version == 0:
                     from py_opm_wm_bm import GetSessionUserId
@@ -360,10 +368,6 @@ class Request(SessionData):
             if not self.allowed_file(file.get('filename')):
                 raise FileError('不支持的文件类型: %s' % file.get('filename'))
 
-            path = path or self.config.TMP_DIR
-            if not os.path.exists(path):
-                os.makedirs(path)
-
             max_loop = 10
             while os.path.exists(os.path.join(path, file['filename'])) and max_loop > 0:
                 file['filename'] = ''.join(random.sample(string.ascii_letters + string.digits, 8)) + file['filename']
@@ -453,8 +457,8 @@ class Request(SessionData):
                         j_data[key] = _dumps_json(j_data[key])
                 return j_data
 
-        # json_data = _dumps_json(json_data)
-        return json.loads(post_data)
+        json_data = _dumps_json(post_data)
+        return json_data
 
     @property
     def content_type(self):
