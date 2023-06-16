@@ -423,6 +423,7 @@ class Request(SessionData):
         """
         解析json
         """
+        json_data = json.loads(post_data)
 
         def _dumps_json(j_data):
 
@@ -457,8 +458,7 @@ class Request(SessionData):
                         j_data[key] = _dumps_json(j_data[key])
                 return j_data
 
-        json_data = _dumps_json(post_data)
-        return json_data
+        return _dumps_json(json_data)
 
     @property
     def content_type(self):
