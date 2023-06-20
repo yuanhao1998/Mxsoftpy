@@ -90,14 +90,7 @@ class SessionData:
             return self._user
         else:
             if NO_SESSION:
-                res = requests.get("http://127.0.0.1/tarsier-vmdb/cmv/integration/authority/getCurUser?tk=%s" % request().headers.get('tk', ''))
-                try:
-                    data = res.json()
-                except Exception:
-                    raise AuthError('登录失败')
-                if data.get('code') != '-1':
-                    raise AuthError('登录过期')
-                return data.get('data', {}).get('userCode')
+                return '1'
             else:
                 if request().config.version == 0:
                     from py_opm_wm_bm import GetSessionUserId
