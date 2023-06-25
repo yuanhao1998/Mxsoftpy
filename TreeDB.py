@@ -153,8 +153,8 @@ class TreeDB(BaseDB):
         self.exec1('bs_treedb_open_sql_session', host or _host, port or _port, file, main_key_pwd)
         return self
 
-    @classmethod
-    def file_names(cls, host: str = None, port: int = None) -> list:
+    # @classmethod
+    def file_names(self, host: str = None, port: int = None) -> list:
         """
         获取数据库所有数据库名
         eg: TreeDB.main_keys(host='127.0.0.1', port=8123)
@@ -162,10 +162,10 @@ class TreeDB(BaseDB):
         :param host: 主机
         :param port: 端口
         """
-        host, port = cls._check_conn_params(cls, host, port)
+        host, port = self._check_conn_params(TreeDB, host, port)
 
         res_list = list()
-        cls.exec_class('bs_tabledb_get_all_dbnames', res_list, host, port)
+        self.exec2('bs_tabledb_get_all_dbnames', res_list, host, port)
         return res_list
 
     @classmethod
