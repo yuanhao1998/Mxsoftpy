@@ -283,6 +283,21 @@ class TreeDB(BaseDB):
         host, port = cls._check_conn_params(cls, host, port, file)
         return cls.exec_class('Treedb_CreateMainKey', host, file, main_key, main_pwd, port)
 
+    def delete_main_key(self, main_key: str, file: str, main_pwd: str = '', host: str = None, port: int = None) -> int:
+        """
+        删除主键
+        eg: db.insert_main_key('test', host='127.0.0.1', file='IOT')
+
+        :param main_key: 主键名
+        :param file: 文件名
+        :param main_pwd: 主键密码
+        :param host: 主机ip
+        :param port: 端口
+        """
+        host, port = self._check_conn_params(self, host, port, file)
+
+        return self.exec_tree('Treedb_DeleteMainKey', host, file, main_key, main_pwd, port)
+
     def insert_sub_keys(self, sub_keys: Union[str, list] = '', flag: int = TDDB_OPKF_CREATEDYNKEY) -> Union[str, list]:
         """
         批量插入子键
@@ -540,7 +555,8 @@ class TreeDB(BaseDB):
 
         return res, res_list
 
-    def get_binary_prop(self, prop_name: str, is_save_file = False, save_path: str = None, file_name: str = None) -> bytes:
+    def get_binary_prop(self, prop_name: str, is_save_file=False, save_path: str = None,
+                        file_name: str = None) -> bytes:
         """
         获取二进制内容
         保存文件的名称目前不支持自定义，文件名称为存储时的文件名称
