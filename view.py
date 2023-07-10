@@ -477,7 +477,7 @@ class Request(SessionData):
         """
         获取web服务所在目录
         """
-        return os.path.join(__file__.split('webexpress')[0], 'webexpress')
+        return os.path.join(os.path.abspath(__file__).split('webexpress')[0], 'webexpress')
 
 
 class Response:

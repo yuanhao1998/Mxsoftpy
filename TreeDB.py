@@ -139,7 +139,7 @@ class TreeDB(BaseDB):
             self.exec1('bs_treedb_open_sql_session', host, port, file, main_key_pwd)
         return self
 
-    def open_sql_session(self, file: str = None, host: str = None, port: str = None, main_key_pwd: str = ''):
+    def open_sql_session(self, file: str = None, host: str = None, port: int = None, main_key_pwd: str = ''):
         """
         打开一个执行tree sql的连接
         :param host: 主机名
