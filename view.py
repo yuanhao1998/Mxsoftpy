@@ -23,12 +23,6 @@ from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request, config
 from .parse import scope_to_environ
 
-# noinspection PyBroadException
-try:
-    NO_SESSION = int(config().middle.main.NoSession)
-except Exception:
-    NO_SESSION = 0
-
 
 class SessionData:
 
@@ -41,6 +35,11 @@ class SessionData:
         self._role = None
         self._role_filter = None
         self._is_admin = None
+        # noinspection PyBroadException
+        try:
+            self.NO_SESSION = int(config().middle.main.NoSession)
+        except Exception as e:
+            self.NO_SESSION = 0
 
     @property
     def cookie(self) -> dict:
@@ -51,7 +50,7 @@ class SessionData:
         """
         获取session id
         """
-        if NO_SESSION:
+        if self.NO_SESSION:
             return self.cookie.get('mxsessionid', '')
         else:
             if not self.cookie.get('mxsessionid') and request().config.version == 0:
@@ -66,7 +65,7 @@ class SessionData:
         if self._company:
             return self._company
         else:
-            if NO_SESSION:
+            if self.NO_SESSION:
                 return 'Co_1'
             else:
                 if request().config.version == 0:
@@ -89,7 +88,7 @@ class SessionData:
         if self._user:
             return self._user
         else:
-            if NO_SESSION:
+            if self.NO_SESSION:
                 return '1'
             else:
                 if request().config.version == 0:
@@ -112,7 +111,7 @@ class SessionData:
         if self._user_group:
             return self._user_group
         else:
-            if NO_SESSION:
+            if self.NO_SESSION:
                 return '1'
             else:
                 if request().config.version == 0:
@@ -174,7 +173,7 @@ class SessionData:
         if isinstance(self._is_admin, tuple):
             return self._is_admin[1]
         else:
-            if NO_SESSION:
+            if self.NO_SESSION:
                 return True
             else:
                 if request().config.version == 0:
@@ -236,7 +235,7 @@ class Request(SessionData):
         else:
             cookie_dict = dict()
 
-            if NO_SESSION:
+            if self.NO_SESSION:
                 pass
             else:
                 for cookie in self.headers.get('cookie', '').split('; '):
