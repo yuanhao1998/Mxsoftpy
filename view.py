@@ -532,7 +532,7 @@ class FileResponse(Response):
         self.request.add_header('Content-Type', 'application/force-download')
         self.request.add_header('Content-Type', 'application/octet-stream')
         self.request.add_header('Content-Type', 'application/download')
-        self.request.add_header('Content-Disposition', 'inline;filename=%s' % filename)
+        self.request.add_header('Content-Disposition', 'attachment;filename=%s' % filename)
         self.request.add_header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
         self.request.add_header('Pragma', 'no-cache')
 
