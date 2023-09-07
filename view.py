@@ -16,7 +16,6 @@ from io import BytesIO
 from urllib.parse import parse_qs
 
 import anyio
-import requests
 
 from .def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError

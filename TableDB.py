@@ -299,7 +299,7 @@ class TableDB(BaseDB):
         elif count:
             sql += ' limit ' + ','.join([str(0), str(count)])
         elif page_size:
-            sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_index * page_size)])
+            sql += ' limit ' + ','.join([str((page_index - 1) * page_size), str(page_size)])
 
         return count_sql, sql
 
