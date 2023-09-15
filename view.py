@@ -54,7 +54,7 @@ class SessionData:
         else:
             if not self.cookie.get('mxsessionid') and request().config.version == 0:
                 raise AuthError('获取session失败，请重新登录')
-            return self.cookie.get('mxsessionid', '')
+            return self.cookie['mxsessionid'].strip('"') if self.cookie.get('mxsessionid', '').startswith('"') else self.cookie.get('mxsessionid', '')
 
     @property
     def company(self) -> str:
