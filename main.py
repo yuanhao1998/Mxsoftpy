@@ -203,32 +203,30 @@ class Mx(BaseMx):
 
     @staticmethod
     def load_cache():
-        from utils.middleware.cache import add_cache
         print('-------------python开始加载缓存-------------')
-        add_cache()
+        # from utils.middleware.cache import add_cache
+        # add_cache()
         print('-------------python加载缓存结束-------------')
 
-    def run(self, listen='*:7121', reload=False, **kwargs):
+    def run(self, reload=False, **kwargs):
         """
         运行服务
-        :param listen: 监听地址
-        :param reload: 是否自动重载
         """
-        from waitress import serve
+        import uvicorn
 
         if reload:
-            self.run_with_reloader(serve, listen=listen, **kwargs)
+            self.run_with_reloader(uvicorn.run, host="0.0.0.0", port=7121)
         else:
             self.load_cache()
-            serve(self, listen=listen, **kwargs)
+            uvicorn.run(self, host="0.0.0.0", port=7121)
 
     def run_with_reloader(self, main_func, **kwargs):
         """
         自动重载实现
         """
         reloader = Reloader()
-        if os.environ.get('WAITRESS_RUN_MAIN') == 'true':
-            thread = threading.Thread(target=main_func, args=(self,), kwargs=kwargs)
+        if os.environ.get('RUN_MAIN') == 'true':
+            thread = threading.Thread(target=main_func, args=(self, ), kwargs=kwargs)
             thread.setDaemon(True)
             thread.start()
             reloader.code_changed()
@@ -300,7 +298,7 @@ class Reloader:
         """
         while True:
             new_environ = os.environ.copy()
-            new_environ['WAITRESS_RUN_MAIN'] = 'true'
+            new_environ['RUN_MAIN'] = 'true'
             exit_code = subprocess.call(self._get_args_for_reloading(), env=new_environ)
             if exit_code != 3:
                 return exit_code
