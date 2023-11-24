@@ -68,10 +68,10 @@ class BaseDB:
                     max_depth = 100
                     while getattr(frame, 'f_back'):
                         frame = frame.f_back
-                        logging.debug('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
+                        logging.error('%s %s' % (frame.f_code.co_filename, frame.f_lineno))
                         max_depth -= 1
                         if max_depth < 0:
-                            logging.debug('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
+                            logging.error('输出错误日志时，超过最大循环深度，日志未完全展示 . . .')
                             break
             finally:
                 del frame
