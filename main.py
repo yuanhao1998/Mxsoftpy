@@ -191,7 +191,10 @@ class Mx(BaseMx):
             path = os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + '/middle/Pymod/'
             if not os.path.exists(path):
                 os.makedirs(path)
-            traceback.print_exc(file=open(log_path, 'a+'))
+            with open(log_path, 'a+') as f:
+                print("错误时间：%s" % time.strftime("%Y-%m-%d %H:%M:%s", time.localtime()), file=f)
+                traceback.print_exc(file=f)
+
             raise e
 
     async def __call__(self, scope, receive, send):
