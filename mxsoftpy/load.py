@@ -2,13 +2,19 @@
 # @Create   : 2021/8/3 15:14
 # @Author   : yh
 # @Remark   : 初始化加载
-from utils.conf.mxconfig import MxConfig
+def load():
+    server_config_init()  # 加载配置文件
+
+try:
+    from utils.conf.mxconfig import MxConfig
+except ModuleNotFoundError:
+    def load():  # 无法导包时不加载配置
+        pass
 
 _server_config = None  # 配置文件全局变量
 
 
-def load():
-    server_config_init()  # 加载配置文件
+
 
 
 def server_config_init():

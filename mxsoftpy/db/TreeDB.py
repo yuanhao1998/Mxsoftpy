@@ -8,10 +8,10 @@ import superbsapi
 from mxsoftpy import Model
 from superbsapi import CBSHandleLoc
 
-from .BaseDB import BaseDB
-from exception import DBError, DataError
-from db_def.def_type import *
-from db_def.def_tree import *
+from mxsoftpy.db.BaseDB import BaseDB
+from mxsoftpy.exception import DBError, DataError
+from mxsoftpy.db_def.def_type import *
+from mxsoftpy.db_def.def_tree import *
 
 symbol_map = {
     'e': TRDB_FMC_EQUAL,  # 等于

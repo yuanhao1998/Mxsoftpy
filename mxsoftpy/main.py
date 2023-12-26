@@ -15,12 +15,12 @@ import typing as t
 
 from pydantic import ValidationError
 
-from .base import BaseMx
-from .exception import NotFoundError, MxBaseException
-from .view import Request, Response
+from mxsoftpy.base import BaseMx
+from mxsoftpy.exception import NotFoundError, MxBaseException
+from mxsoftpy.view import Request, Response
 
 if t.TYPE_CHECKING:
-    from .module import Module
+    from module import Module
 
 request_context = contextvars.ContextVar('request')  # request上下文变量
 

@@ -8,7 +8,7 @@ from mxsoftpy import Model
 from mxsoftpy.db_def.db_error import BS_NOERROR
 from mxsoftpy.db_def.def_tree import *
 from mxsoftpy.db_def.def_type import type_map
-from mxsoftpy.BaseDB import BaseDB
+from mxsoftpy.db.BaseDB import BaseDB
 from mxsoftpy.exception import DBError
 
 

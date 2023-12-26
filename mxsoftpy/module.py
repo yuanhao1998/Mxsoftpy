@@ -4,7 +4,7 @@
 # @Remark   : 模块类
 import typing as t
 
-from .base import BaseMx
+from mxsoftpy.base import BaseMx
 
 
 class Module(BaseMx):

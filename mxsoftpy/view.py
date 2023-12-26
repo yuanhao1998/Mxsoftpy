@@ -17,10 +17,10 @@ from urllib.parse import parse_qs
 
 import anyio
 
-from db_def.def_http_code import HttpCode
-from .exception import HTTPMethodError, DataError, AuthError, FileError
-from .globals import request, config
-from .parse import scope_to_environ
+from mxsoftpy.db_def.def_http_code import HttpCode
+from mxsoftpy.exception import HTTPMethodError, DataError, AuthError, FileError
+from mxsoftpy.globals import request, config
+from mxsoftpy.parse import scope_to_environ
 
 
 class SessionData:
