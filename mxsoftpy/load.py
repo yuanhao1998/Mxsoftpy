@@ -5,6 +5,7 @@
 def load():
     server_config_init()  # 加载配置文件
 
+
 try:
     from utils.conf.mxconfig import MxConfig
 except ModuleNotFoundError:
@@ -12,9 +13,6 @@ except ModuleNotFoundError:
         pass
 
 _server_config = None  # 配置文件全局变量
-
-
-
 
 
 def server_config_init():

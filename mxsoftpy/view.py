@@ -52,7 +52,7 @@ class SessionData:
         if self.NO_SESSION:
             return self.cookie.get('mxsessionid', '')
         else:
-            if not self.cookie.get('mxsessionid') and request().config.version == 0:
+            if not self.cookie.get('mxsessionid') and getattr(request(), 'config') and request().config.version == 0:
                 raise AuthError('获取session失败，请重新登录')
             return self.cookie['mxsessionid'].strip('"') if self.cookie.get('mxsessionid', '').startswith('"') else self.cookie.get('mxsessionid', '')
 
@@ -67,7 +67,7 @@ class SessionData:
             if self.NO_SESSION:
                 return 'Co_1'
             else:
-                if request().config.version == 0:
+                if getattr(request(), 'config') and request().config.version == 0:
                     from py_opm_wm_bm import GetSessionCompany
                     flag, company = GetSessionCompany(self.session_id)
                     if flag == 0 or flag is True:
@@ -90,7 +90,7 @@ class SessionData:
             if self.NO_SESSION:
                 return '1'
             else:
-                if request().config.version == 0:
+                if getattr(request(), 'config') and request().config.version == 0:
                     from py_opm_wm_bm import GetSessionUserId
                     flag, user = GetSessionUserId(self.session_id)
                     if flag == 0 or flag is True:
@@ -113,7 +113,7 @@ class SessionData:
             if self.NO_SESSION:
                 return '1'
             else:
-                if request().config.version == 0:
+                if getattr(request(), 'config') and request().config.version == 0:
                     from py_opm_wm_bm import GetSessionUserGroupId
                     flag, user_group = GetSessionUserGroupId(self.session_id)
                     if flag == 0 or flag is True:
@@ -140,7 +140,7 @@ class SessionData:
         """
         if self._role:
             return self._role
-        elif request().config.version == 0:
+        elif getattr(request(), 'config') and request().config.version == 0:
             return []
         else:
             from db.customer.Cloudwise.user import DubboUser
@@ -155,7 +155,7 @@ class SessionData:
         """
         if self._role_filter:
             return self._role_filter
-        elif request().config.version == 0:
+        elif getattr(request(), 'config') and request().config.version == 0:
             return []
         else:
             from db.customer.Cloudwise.user import DubboUser
@@ -175,7 +175,7 @@ class SessionData:
             if self.NO_SESSION:
                 return True
             else:
-                if request().config.version == 0:
+                if getattr(request(), 'config') and request().config.version == 0:
                     from db.public.Setting.user import UserGroupCache
                     group_info = UserGroupCache().items(request().user_group)
                     self._is_admin = (1, group_info.get('is_admin'))
