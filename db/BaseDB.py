@@ -11,10 +11,10 @@ import os
 from superbsapi import *
 from mxsoftpy import Model
 
-from .db_def.db_error import BS_NOERROR
-from .db_def.def_type import type_map
-from .exception import DBError, DataError
-from .globals import request
+from db_def.db_error import BS_NOERROR
+from db_def.def_type import type_map
+from exception import DBError, DataError
+from globals import request
 
 
 class BaseDB:

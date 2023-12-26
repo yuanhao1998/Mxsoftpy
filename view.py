@@ -17,7 +17,7 @@ from urllib.parse import parse_qs
 
 import anyio
 
-from .def_http_code import HttpCode
+from db_def.def_http_code import HttpCode
 from .exception import HTTPMethodError, DataError, AuthError, FileError
 from .globals import request, config
 from .parse import scope_to_environ

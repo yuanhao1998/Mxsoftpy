@@ -9,9 +9,9 @@ from mxsoftpy import Model
 from superbsapi import CBSHandleLoc
 
 from .BaseDB import BaseDB
-from .exception import DBError, DataError
-from .db_def.def_type import *
-from .db_def.def_tree import *
+from exception import DBError, DataError
+from db_def.def_type import *
+from db_def.def_tree import *
 
 symbol_map = {
     'e': TRDB_FMC_EQUAL,  # 等于

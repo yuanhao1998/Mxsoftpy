@@ -10,9 +10,9 @@ from superbsapi import CBSHandleLoc
 
 from . import Model
 from .BaseDB import BaseDB
-from .db_def.def_table import TBDB_DT_RS
-from .db_def.def_type import type_map, type_c_python, type_c_str
-from .exception import DBError, DataError
+from db_def.def_table import TBDB_DT_RS
+from db_def.def_type import type_map, type_c_python, type_c_str
+from exception import DBError, DataError
 
 sql_symbol_map = {
     'e': '=',  # 等于

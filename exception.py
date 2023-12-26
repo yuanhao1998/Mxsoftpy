@@ -5,7 +5,7 @@
 import json
 
 from .db_def.db_error import error_dict
-from .def_http_code import HttpCode
+from db_def.def_http_code import HttpCode
 
 
 class MxBaseException(Exception):

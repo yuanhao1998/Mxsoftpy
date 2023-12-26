@@ -8,9 +8,9 @@ from collections import namedtuple
 from superbsapi import bs_close_handle
 
 from .BaseDB import BaseDB
-from .db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ
-from .db_def.def_type import type_map
-from .exception import DBError, DataError
+from db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ
+from db_def.def_type import type_map
+from exception import DBError, DataError
 
 
 class MQ(BaseDB):
