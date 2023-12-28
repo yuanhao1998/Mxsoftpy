@@ -2,7 +2,7 @@
 # @Create   : 2021/5/26 9:47
 # @Author   : yh
 # @Remark   : http会话相关的公共方法
-from view import Response
+from .view import Response
 
 
 def redirect(url: str, params: dict = None, status_code=302):

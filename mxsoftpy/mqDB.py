@@ -7,7 +7,7 @@ import platform
 from collections import namedtuple
 from superbsapi import bs_close_handle
 
-from mxsoftpy.db.BaseDB import BaseDB
+from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.db_def.def_mq import BSMQ_OF_CREATENEW, BSMQ_OF_OPENEXIST, BSMQ_OT_COMMONMQ
 from mxsoftpy.db_def.def_type import type_map
 from mxsoftpy.exception import DBError, DataError

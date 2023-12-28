@@ -9,7 +9,7 @@ from typing import Type, List, Any, Union
 from superbsapi import CBSHandleLoc
 
 from mxsoftpy import Model
-from mxsoftpy.db.BaseDB import BaseDB
+from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.db_def.def_table import TBDB_DT_RS
 from mxsoftpy.db_def.def_type import type_map, type_c_python, type_c_str
 from mxsoftpy.exception import DBError, DataError

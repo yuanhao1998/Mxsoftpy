@@ -8,7 +8,7 @@ import superbsapi
 from mxsoftpy import Model
 from superbsapi import CBSHandleLoc
 
-from mxsoftpy.db.BaseDB import BaseDB
+from mxsoftpy.BaseDB import BaseDB
 from mxsoftpy.exception import DBError, DataError
 from mxsoftpy.db_def.def_type import *
 from mxsoftpy.db_def.def_tree import *
