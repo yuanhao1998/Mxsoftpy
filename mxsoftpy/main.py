@@ -192,7 +192,7 @@ class Mx(BaseMx):
             if not os.path.exists(path):
                 os.makedirs(path)
             with open(log_path, 'a+') as f:
-                print("错误时间：%s" % time.strftime("%Y-%m-%d %H:%M:%s", time.localtime()), file=f)
+                print("错误时间：%s" % time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), file=f)
                 traceback.print_exc(file=f)
 
             raise e
