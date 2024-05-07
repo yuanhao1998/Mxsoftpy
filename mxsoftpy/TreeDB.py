@@ -55,7 +55,7 @@ class TreeDB(BaseDB):
         """
         return self.exec_tree('Treedb_RollbackTransaction')
 
-    def create_index(self, name, name_type, flag=0):
+    def create_index(self, name: str, name_type, flag=0):
         """
         创建索引
         :param name: 要建立索引的字段名称
@@ -66,14 +66,15 @@ class TreeDB(BaseDB):
         return self.exec_bs('bs_treedb_create_index', [{'name': name, 'uFlag': flag,
                                                         'uType': type_map.get(name_type) or name_type}])
 
-    def delete_index(self):
+    def delete_index(self, name: Union[str, list]):
         """
         删除索引
         :return:
         """
 
-        # TODO 用到了再写吧
-        # return self.exec_bs('bs_treedb_delete_index')
+        if isinstance(name, str):
+            name = [name]
+        return self.exec_bs('bs_treedb_delete_index', name)
 
     def get_index_names(self):
         """
