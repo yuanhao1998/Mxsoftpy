@@ -2,7 +2,7 @@
 # @Author : yh
 # @Time : 2020/11/5 16:18
 # @Remark: 存放Tree db数据库的操作方法，详情见TreeModel使用手册
-from typing import List, Any, Union
+from typing import List, Any, Union, Tuple
 
 import superbsapi
 from mxsoftpy import Model
@@ -529,7 +529,7 @@ class TreeDB(BaseDB):
                             default_expression or ' and '.join(expression_list))
 
     def filter(self, page_size=0, page_index=1, order_by: Union[str, List[tuple]] = '', is_desc=False,
-               default_expression=None, **kwargs) -> tuple:
+               default_expression=None, **kwargs) -> Tuple[int, List[str]]:
         """
         根据属性筛选符合条件的子键（可分页显示）
 

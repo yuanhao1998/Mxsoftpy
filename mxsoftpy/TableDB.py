@@ -240,14 +240,21 @@ class TableDB(BaseDB):
             raise DBError(1, '未指定要删除的table')
         return self.exec_bs('bs_tabledb_delete_table', table_name or self.__table, flag)
 
-    def __generate_filter_data(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
-                               is_desc=False, default_expression=None, count: int = None, **kwargs) -> tuple:
+    def delete(self, table: str = None, default_expression=None, **kwargs):
+        """
+        删table的记录
+        """
 
-        prop = ','.join([str(i) for i in prop_list]) if isinstance(prop_list, list) else prop_list or '*'
+        sql = f"delete from {table or self.__table}"
+        sql += self.__generate_conditional_expression(default_expression, **kwargs)
+        self.exec_for_sql(sql)
 
-        sql = f"select {prop} from {table or self.__table}"
-        count_sql = f"select count(*) from {table or self.__table}"
-
+    @staticmethod
+    def __generate_conditional_expression(default_expression, **kwargs):
+        """
+        生成条件表达式
+        """
+        where_sql = ''
         query_list = list()
 
         for key, value in kwargs.items():
@@ -267,28 +274,32 @@ class TableDB(BaseDB):
                 assert isinstance(value, list) and len(value) == 2, '查询格式错误！正确示例：a__between=[1, 3]'
                 value = ' and '.join([str(i if type(i).__name__ != 'str' else '\'' + i + '\'') for i in value])
 
-            # query_list.append(
-            #     "%s %s %s" % (
-            #     key, sql_symbol_map[symbol], value))
-
             if sql_symbol_map[symbol] == 'between':
                 value = value
             else:
                 value = value if type(value).__name__ != 'str' else '\'' + value + '\''
-            query_list.append(
-                "%s %s %s" % (
-                    key, sql_symbol_map[symbol], value))
+            query_list.append("%s %s %s" % (key, sql_symbol_map[symbol], value))
 
         if default_expression:
             expression_list = re.split('\d', default_expression)[1:-1]
             for index, value in enumerate(query_list):
                 expression_list.insert(0 + index * 2, value)
 
-            sql += ' where ' + ' '.join(expression_list)
-            count_sql += ' where ' + ' '.join(expression_list)
+            where_sql += ' where ' + ' '.join(expression_list)
         else:
-            sql += ' where ' + ' and '.join(query_list) if query_list else ''
-            count_sql += ' where ' + ' and '.join(query_list) if query_list else ''
+            where_sql += ' where ' + ' and '.join(query_list) if query_list else ''
+
+        return where_sql
+
+    def __generate_filter_data(self, table: str = None, prop_list: Union[str, list] = None, page_size=0, page_index=1,
+                               is_desc=False, default_expression=None, count: int = None, **kwargs) -> tuple:
+
+        prop = ','.join([str(i) for i in prop_list]) if isinstance(prop_list, list) else prop_list or '*'
+
+        sql, count_sql = f"select {prop} from {table or self.__table}", f"select count(*) from {table or self.__table}"
+        where_sql = self.__generate_conditional_expression(default_expression, **kwargs)
+        sql += where_sql
+        count_sql += where_sql
 
         if count and page_size:
             limit_num2 = count - (page_index - 1) * page_size if count < page_index * page_size else page_size
