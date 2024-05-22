@@ -17,7 +17,7 @@ from pydantic import ValidationError
 
 from mxsoftpy.base import BaseMx
 from mxsoftpy.exception import NotFoundError, MxBaseException
-from mxsoftpy.view import Request, Response
+from mxsoftpy.view import Request, Response, SSEResponse
 
 if t.TYPE_CHECKING:
     from module import Module
@@ -58,6 +58,18 @@ class Mx(BaseMx):
         for k, v in module.url_map.items():
             self.url_map[k] = v
 
+    @staticmethod
+    async def sse_response(send, response: SSEResponse):
+        """
+        sse类型响应处理
+        """
+        for i in await response.data:
+            i = bytes(f"data: Event {i}\n\n", encoding='utf-8') if not isinstance(i, bytes) else i
+            await send({"type": "http.response.body", "more_body": True, "body": i})
+        response.end_msg = bytes(f"data: Event {response.end_msg}\n\n", encoding='utf-8') \
+            if not isinstance(response.end_msg, bytes) else response.end_msg
+        await send({'type': 'http.response.body', 'body': response.end_msg, 'more_body': False})
+
     async def full_dispatch_request(self, scope, receive, send):
         """
         处理asgi服务器的请求
@@ -86,9 +98,13 @@ class Mx(BaseMx):
                 "headers": [(k.encode(), v.encode()) for k, v in response.request.headers.items()],
             }
         )
-        data = await response.data
-        await send({"type": "http.response.body",
-                    "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
+
+        if isinstance(response, SSEResponse):  # stream流响应
+            await self.sse_response(send, response)
+        else:
+            data = await response.data
+            await send({"type": "http.response.body",
+                        "body": bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data})
 
     async def preprocess_request(self):
         """
@@ -111,9 +127,12 @@ class Mx(BaseMx):
             'content-type'] = response.request.content_type or response.request.response_content_type
         for after_func in self.after_request_funcs:
             response = after_func(response)
-        data = await response.data
-        response.request.headers["content-length"] = str(
-            len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
+
+        if not isinstance(response, SSEResponse):
+            data = await response.data
+            response.request.headers["content-length"] = str(
+                len(bytes(data, encoding='utf-8') if not isinstance(data, bytes) else data))
+
         return response
 
     async def run_func(self) -> Response:
@@ -229,7 +248,7 @@ class Mx(BaseMx):
         """
         reloader = Reloader()
         if os.environ.get('RUN_MAIN') == 'true':
-            thread = threading.Thread(target=main_func, args=(self, ), kwargs=kwargs)
+            thread = threading.Thread(target=main_func, args=(self,), kwargs=kwargs)
             thread.setDaemon(True)
             thread.start()
             reloader.code_changed()

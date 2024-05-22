@@ -462,6 +462,11 @@ class Request(SessionData):
             self._content_type = self.headers.get('content-type')
             return self._content_type
 
+    @content_type.setter
+    def content_type(self, content_type):
+        self.headers['content-type'] = content_type
+        self._content_type = content_type
+
     def add_header(self, header: str, value: str):
         """
         添加响应头
@@ -491,6 +496,7 @@ class Response:
         :param kwargs:
                         type：响应类型
                             args：default 默认响应，会调用package_data对data进行包装
+                        content-type：响应头
         """
         self.request = request_handle if request_handle else request()
         self.kwargs = kwargs
@@ -524,16 +530,45 @@ class Response:
 
 
 class FileResponse(Response):
+    """
+    文件响应类
+    """
 
     def __init__(self, data: t.Any, filename: str, *args, **kwargs):
         super().__init__(data, *args, **kwargs)
+        self.request.content_type = 'application/download'
         self.request.add_header('Content-Transfer-Encoding', 'binary')
-        self.request.add_header('Content-Type', 'application/force-download')
-        self.request.add_header('Content-Type', 'application/octet-stream')
         self.request.add_header('Content-Type', 'application/download')
         self.request.add_header('Content-Disposition', 'attachment;filename=%s' % filename)
         self.request.add_header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
         self.request.add_header('Pragma', 'no-cache')
+
+
+class SSEResponse(Response):
+    """
+    SSE响应类
+    """
+    def __init__(self, data: t.Generator, end_msg: str = "", *args, **kwargs):
+        """
+        此类型的data必须为一个生成器对象
+        eg:
+            def test():
+                count = 0
+                while count < 10:
+                    yield count
+                    count += 1
+
+        end_msg: 结束时要响应的提升信息，例如：批量新增设备完成后，响应成功提示
+        """
+        super().__init__(data, *args, **kwargs)
+        self.end_msg = end_msg
+        self.request.content_type = 'text/event-stream'
+        self.request.add_header("Transfer-Encoding", "chunked")
+        self.request.add_header("connection", "keep-alive")
+
+    @property
+    async def data(self) -> t.Generator:
+        return self.res
 
 
 async def run_in_threadpool(func, *args, **kwargs):

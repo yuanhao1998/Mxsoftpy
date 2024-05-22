@@ -3,6 +3,7 @@
 # @Remark  :
 from starlette.testclient import TestClient as TestClient
 from mxsoftpy import Mx, View
+from mxsoftpy.view import SSEResponse
 
 app = Mx()
 
@@ -30,10 +31,21 @@ class RequestData(View):
         return "ok", self.request.POST
 
 
+class ReqeustSSE(View):
+    async def post(self):
+        def run():
+            i = 10
+            while i > 0:
+                yield i
+                i -= 1
+        return SSEResponse(run())
+
+
 app.add_resource(RequestHeaders, "/request_headers")
 app.add_resource(RequestCookie, '/request_cookie')
 app.add_resource(RequestSession, "/request_session")
 app.add_resource(RequestData, "/request_data")
+app.add_resource(ReqeustSSE, "/request_sse")
 client = TestClient(app)
 
 
